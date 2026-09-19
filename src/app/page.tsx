@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { NewRoadbookDialog } from "@/components/roadbook/new-roadbook-dialog";
 import { Onboarding } from "@/components/roadbook/onboarding";
@@ -75,15 +76,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-slate-800 bg-slate-900">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-600 text-sm font-bold text-white">
-              RB
-            </div>
+          <div className="flex items-center gap-2.5">
+            <AppLogo size={34} />
             <div>
-              <p className="text-sm font-semibold leading-none text-slate-900">Rally Roadbook</p>
-              <p className="text-xs text-slate-400">Els meus roadbooks</p>
+              <p className="text-sm font-semibold leading-none text-white">Rally Roadbook</p>
+              <p className="mt-1 text-xs text-slate-400">Els meus roadbooks</p>
             </div>
           </div>
           {!isEmpty && (

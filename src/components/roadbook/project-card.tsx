@@ -24,7 +24,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ summary, onDuplicate, onDelete, onExport }: ProjectCardProps) {
   return (
-    <Card className="flex flex-col justify-between transition-shadow hover:shadow-md">
+    <Card className="flex flex-col justify-between transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
       <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
         <div className="min-w-0">
           <CardTitle className="truncate">{summary.name}</CardTitle>
@@ -58,10 +58,12 @@ export function ProjectCard({ summary, onDuplicate, onDelete, onExport }: Projec
           <Route className="mr-1 h-3 w-3" />
           {summary.sectorCount} sector{summary.sectorCount === 1 ? "" : "s"}
         </Badge>
-        <Badge variant="default">{formatKm(summary.totalDistanceKm)} km</Badge>
+        <Badge variant="default" className="bg-red-50 text-red-700">
+          {formatKm(summary.totalDistanceKm)} km
+        </Badge>
       </CardContent>
       <CardFooter>
-        <Button asChild className="w-full">
+        <Button asChild variant="primary" className="w-full">
           <Link href={`/r/${summary.id}`}>Obre</Link>
         </Button>
       </CardFooter>

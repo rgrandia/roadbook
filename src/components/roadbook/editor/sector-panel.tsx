@@ -117,14 +117,14 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
             </Select>
           </div>
 
-          <div className="ml-auto flex items-end gap-4 text-right">
-            <div>
+          <div className="ml-auto flex items-end gap-3 text-right">
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5">
               <p className="text-[11px] uppercase tracking-wide text-slate-400">Distància</p>
-              <p className="text-lg font-semibold text-slate-900">{formatKm(totalDistance)} km</p>
+              <p className="text-lg font-semibold tabular-nums text-slate-900">{formatKm(totalDistance)} km</p>
             </div>
-            <div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5">
               <p className="text-[11px] uppercase tracking-wide text-slate-400">Temps estimat</p>
-              <p className="text-lg font-semibold text-slate-900">{formatMinutes(estimatedMinutes)}</p>
+              <p className="text-lg font-semibold tabular-nums text-slate-900">{formatMinutes(estimatedMinutes)}</p>
             </div>
             <Button variant="outline" size="sm" onClick={recalcAllKm} title="Recalcula tot el quilometratge">
               <RefreshCw className="h-3.5 w-3.5" /> Recalcula

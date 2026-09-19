@@ -84,11 +84,12 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Estructura</p>
+        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Estructura</p>
           <Button
             size="sm"
             variant="ghost"
+            className="text-slate-600 hover:bg-red-50 hover:text-red-700"
             onClick={() => {
               addStage();
               onClose();
@@ -97,10 +98,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             <Plus className="h-3.5 w-3.5" /> Etapa
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2.5">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleStageDragEnd}>
             <SortableContext items={roadbook.stages.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 {roadbook.stages.map((stage) => (
                   <StageItem
                     key={stage.id}
@@ -194,9 +195,12 @@ function StageItem({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("rounded-lg border border-slate-200", isDragging && "opacity-60")}
+      className={cn(
+        "overflow-hidden rounded-lg border border-slate-200 shadow-sm transition-shadow",
+        isDragging && "opacity-60 shadow-md",
+      )}
     >
-      <div className="flex items-center gap-1 rounded-t-lg bg-slate-50 px-1.5 py-1.5">
+      <div className="flex items-center gap-1 border-b border-slate-100 bg-slate-50/80 px-1.5 py-1.5">
         <button
           type="button"
           className="cursor-grab touch-none text-slate-300 hover:text-slate-500"
@@ -231,7 +235,7 @@ function StageItem({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="flex-1 truncate text-left text-sm font-medium text-slate-800"
+            className="flex-1 truncate text-left text-sm font-semibold text-slate-800"
           >
             {stage.name}
           </button>
@@ -294,8 +298,10 @@ function SectorItem({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "group flex items-center gap-1 rounded-md px-1 py-1 text-sm",
-        selected ? "bg-red-50 text-red-700" : "text-slate-600 hover:bg-slate-50",
+        "group flex items-center gap-1 border-l-2 py-1 pl-1.5 pr-1 text-sm transition-colors",
+        selected
+          ? "border-l-red-600 bg-red-50 text-red-700"
+          : "border-l-transparent text-slate-600 hover:border-l-slate-200 hover:bg-slate-50",
         isDragging && "opacity-60",
       )}
     >
@@ -309,11 +315,13 @@ function SectorItem({
         <GripVertical className="h-3.5 w-3.5" />
       </button>
       <button type="button" onClick={onSelect} className="flex flex-1 items-center gap-1.5 truncate text-left">
-        <Route className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">
+        <Route className={cn("h-3.5 w-3.5 shrink-0", selected ? "text-red-600" : "text-slate-400")} />
+        <span className={cn("truncate", selected && "font-medium")}>
           {sector.number}. {sector.name}
         </span>
-        <span className="ml-auto shrink-0 text-[11px] text-slate-400">{formatKm(sectorTotalDistance(sector))} km</span>
+        <span className={cn("ml-auto shrink-0 text-[11px]", selected ? "text-red-400" : "text-slate-400")}>
+          {formatKm(sectorTotalDistance(sector))} km
+        </span>
       </button>
       <Button
         size="iconSm"
