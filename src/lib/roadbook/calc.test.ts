@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createInstruction, createSector } from "./factory";
 import {
+  instructionKmRegressive,
   recalcSector,
   roadbookSectorCount,
   roadbookTotalDistance,
   sectorEstimatedTimeMinutes,
+  sectorFinalKm,
   sectorTotalDistance,
   withRecalculatedInstructions,
 } from "./calc";
@@ -146,5 +148,20 @@ describe("sectorEstimatedTimeMinutes", () => {
   it("returns undefined when neither override nor speed is set", () => {
     const s = sector([{ distance: 10 }]);
     expect(sectorEstimatedTimeMinutes(s)).toBeUndefined();
+  });
+});
+
+describe("sectorFinalKm / instructionKmRegressive", () => {
+  it("counts down to exactly 0 at the last instruction", () => {
+    const s = recalcSector(sector([{ distance: 2.474 }, { distance: 0.745 }, { distance: 8.19 }]));
+    expect(sectorFinalKm(s)).toBe(11.41);
+    expect(s.instructions.map((i) => instructionKmRegressive(s, i))).toEqual([8.94, 8.19, 0]);
+  });
+
+  it("accounts for a non-zero sector startKm", () => {
+    const s = recalcSector(sector([{ distance: 5 }, { distance: 5 }], 10));
+    expect(sectorFinalKm(s)).toBe(20);
+    expect(instructionKmRegressive(s, s.instructions[0])).toBe(5);
+    expect(instructionKmRegressive(s, s.instructions[1])).toBe(0);
   });
 });
