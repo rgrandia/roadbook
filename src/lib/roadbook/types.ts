@@ -14,21 +14,39 @@ export type DistanceUnit = "km" | "mi";
 export type Language = "ca" | "es" | "en";
 export type PageOrientation = "portrait" | "landscape";
 
-/** Direction glyph shown in the "Direcció" column and in the PDF. */
+/**
+ * Direction pictogram ("tulip") shown in the "Direcció" column and in the
+ * PDF. Each one is a schematic top-down junction diagram in the tradition of
+ * printed rally roadbooks: a bold line+arrow for the road taken, thin stubs
+ * for the roads not taken, and (where relevant) a give-way triangle or the
+ * roundabout circle. See direction-icons.ts for the actual path data.
+ */
 export type DirectionType =
   | "left"
   | "right"
   | "straight"
-  | "hairpin-left"
-  | "hairpin-right"
-  | "fork-left"
-  | "fork-right"
   | "slight-left"
   | "slight-right"
-  | "roundabout"
-  | "junction"
-  | "merge"
-  | "exit"
+  | "hairpin-left"
+  | "hairpin-right"
+  | "tjunction-left"
+  | "tjunction-right"
+  | "crossroads-left"
+  | "crossroads-right"
+  | "crossroads-straight"
+  | "roundabout-1"
+  | "roundabout-2"
+  | "roundabout-3"
+  | "roundabout-4"
+  | "roundabout-5"
+  | "fork-left"
+  | "fork-right"
+  | "motorway-exit-left"
+  | "motorway-exit-right"
+  | "motorway-keep-left"
+  | "motorway-keep-right"
+  | "motorway-merge-left"
+  | "motorway-merge-right"
   | "u-turn"
   | "none";
 
@@ -66,9 +84,19 @@ export interface Instruction {
 
   direction: DirectionType;
   category: InstructionCategory;
+  /**
+   * Danger/caution marker ("!!" in printed roadbooks), independent of
+   * category: a normal turn instruction can carry a danger warning without
+   * being a whole separate "danger" row.
+   */
+  danger: boolean;
 
   road: RoadInfo;
-  /** Destination town/place shown on the instruction. */
+  /**
+   * Destination sign text. May contain multiple lines - each non-empty line
+   * is printed as its own destination-sign entry in the PDF info panel,
+   * matching the stacked signpost look of real roadbooks.
+   */
   destination?: string;
   /** Free-form point of reference (e.g. "davant de la gasolinera"). */
   reference?: string;
@@ -76,11 +104,18 @@ export interface Instruction {
 
   /** Short free text shown in the "Informació" column. */
   information?: string;
+  /** Translation/second-language variant of `information`, printed in italics below it. */
+  informationSecondary?: string;
   /** Longer free text, printed smaller / secondary. */
   notes?: string;
 
   /** Optional per-instruction time (mm:ss), manual for the MVP. */
   time?: string;
+
+  /** GPS latitude, free text so any notation (DMS, decimal...) can be kept as typed. */
+  gpsLat?: string;
+  /** GPS longitude, free text. */
+  gpsLng?: string;
 }
 
 export type SectorType = "special" | "liaison" | "super-special" | "shakedown" | "neutralized" | "other";
@@ -90,6 +125,8 @@ export interface Sector {
   order: number;
   number: number;
   name: string;
+  /** Optional "Secció/Section" label shown in the PDF page header table, distinct from the sector name. */
+  sectionLabel?: string;
 
   startLocation?: string;
   endLocation?: string;
@@ -127,6 +164,8 @@ export interface RoadbookSettings {
   /** number of decimals shown for km values, e.g. 2 -> "12.30" */
   kmDecimals: number;
   language: Language;
+  /** When set, instructions with `informationSecondary` print it in italics as a translation. */
+  secondaryLanguage?: Language;
   orientation: PageOrientation;
 }
 

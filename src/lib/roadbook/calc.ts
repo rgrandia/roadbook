@@ -61,6 +61,20 @@ export function sectorTotalDistance(sector: Sector): number {
   return round2(sector.instructions.reduce((sum, i) => sum + i.distance, 0));
 }
 
+/** The sector's final cumulative km (startKm + total distance travelled). */
+export function sectorFinalKm(sector: Sector): number {
+  return round2(sector.startKm + sectorTotalDistance(sector));
+}
+
+/**
+ * "Km Regr." (regressive/countdown km): how much distance is left in the
+ * sector from this instruction onwards, counting down to exactly 0.00 at the
+ * last row. Standard column in printed roadbooks alongside Km Total/Parcial.
+ */
+export function instructionKmRegressive(sector: Sector, instruction: Instruction): number {
+  return round2(sectorFinalKm(sector) - instruction.totalKm);
+}
+
 export function stageTotalDistance(stage: Stage): number {
   return round2(stage.sectors.reduce((sum, s) => sum + sectorTotalDistance(s), 0));
 }
