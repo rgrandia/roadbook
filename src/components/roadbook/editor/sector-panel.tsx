@@ -49,6 +49,15 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
             />
           </div>
           <div className="flex flex-col gap-1">
+            <Label>Secció</Label>
+            <Input
+              className="w-32"
+              placeholder="Opcional"
+              value={sector.sectionLabel ?? ""}
+              onChange={(e) => updateSectorMeta(stageId, sector.id, { sectionLabel: e.target.value })}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
             <Label>Tipus de tram</Label>
             <Select
               className="w-40"

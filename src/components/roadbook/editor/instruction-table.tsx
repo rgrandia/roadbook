@@ -17,9 +17,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, GripVertical, Lock, Plus, Trash2, Unlock } from "lucide-react";
+import { AlertTriangle, Copy, GripVertical, Lock, MapPin, Plus, Trash2, Unlock } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CategoryPicker } from "@/components/roadbook/category-picker";
 import { DirectionPicker } from "@/components/roadbook/direction-picker";
 import { CATEGORY_MAP, INFO_CHIPS, collectRoadbookDictionary } from "@/lib/roadbook/library";
@@ -90,11 +94,6 @@ export function InstructionTable({ stageId, sector }: { stageId: string; sector:
       <datalist id="dl-roads">
         {dictionary.roads.map((r) => (
           <option key={r} value={r} />
-        ))}
-      </datalist>
-      <datalist id="dl-destinations">
-        {dictionary.destinations.map((d) => (
-          <option key={d} value={d} />
         ))}
       </datalist>
       <datalist id="dl-information">
@@ -187,6 +186,8 @@ function InstructionRow({
 }: InstructionRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instruction.id });
   const categoryDef = CATEGORY_MAP[instruction.category];
+  const [moreFieldsOpen, setMoreFieldsOpen] = useState(false);
+  const hasMoreFields = Boolean(instruction.informationSecondary || instruction.gpsLat || instruction.gpsLng);
 
   function handleRowKeyDown(e: React.KeyboardEvent) {
     const mod = e.ctrlKey || e.metaKey;
@@ -274,10 +275,10 @@ function InstructionRow({
         />
       </div>
 
-      <Input
-        placeholder="Destinació"
-        list="dl-destinations"
-        className="h-9 px-1.5 text-xs"
+      <Textarea
+        placeholder="Destinació (Enter per afegir-ne una altra línia)"
+        rows={1}
+        className="h-9 resize-none px-1.5 py-1.5 text-xs leading-tight"
         value={instruction.destination ?? ""}
         onChange={(e) => onChange({ destination: e.target.value })}
       />
@@ -292,43 +293,127 @@ function InstructionRow({
 
       <RowActions
         locked={instruction.lockedKm}
+        danger={instruction.danger}
+        hasMoreFields={hasMoreFields}
         onToggleLock={() => onChange({ lockedKm: !instruction.lockedKm })}
+        onToggleDanger={() => onChange({ danger: !instruction.danger })}
+        onOpenMoreFields={() => setMoreFieldsOpen(true)}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
         onInsertBefore={onInsertBefore}
         onInsertAfter={onInsertAfter}
       />
+
+      <MoreFieldsDialog
+        open={moreFieldsOpen}
+        onOpenChange={setMoreFieldsOpen}
+        instruction={instruction}
+        onChange={onChange}
+      />
     </div>
+  );
+}
+
+function MoreFieldsDialog({
+  open,
+  onOpenChange,
+  instruction,
+  onChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  instruction: Instruction;
+  onChange: (partial: Partial<Instruction>) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Camps addicionals - fila {instruction.order}</DialogTitle>
+          <DialogDescription>Traducció, coordenades GPS i avís de perill per a aquesta instrucció.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label>Informació (traducció / segon idioma)</Label>
+            <Textarea
+              rows={2}
+              value={instruction.informationSecondary ?? ""}
+              onChange={(e) => onChange({ informationSecondary: e.target.value })}
+              placeholder="Ex: Keep right"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>Latitud GPS</Label>
+              <Input
+                value={instruction.gpsLat ?? ""}
+                onChange={(e) => onChange({ gpsLat: e.target.value })}
+                placeholder="N 41° 59.420"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Longitud GPS</Label>
+              <Input
+                value={instruction.gpsLng ?? ""}
+                onChange={(e) => onChange({ gpsLng: e.target.value })}
+                placeholder="E 2° 46.462"
+              />
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 function RowActions({
   locked,
+  danger,
+  hasMoreFields,
   onToggleLock,
+  onToggleDanger,
+  onOpenMoreFields,
   onDuplicate,
   onDelete,
   onInsertBefore,
   onInsertAfter,
 }: {
   locked: boolean;
+  danger: boolean;
+  hasMoreFields: boolean;
   onToggleLock: () => void;
+  onToggleDanger: () => void;
+  onOpenMoreFields: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onInsertBefore: () => void;
   onInsertAfter: () => void;
 }) {
   return (
-    <div className="flex items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
-      <details className="relative">
-        <summary className="flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 [&::-webkit-details-marker]:hidden">
+    <div className="flex items-center gap-0.5">
+      <button
+        type="button"
+        onClick={onToggleDanger}
+        title={danger ? "Treu l'avís de perill" : "Marca com a perillós"}
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+          danger ? "!opacity-100 text-orange-600" : "text-slate-300 hover:bg-slate-100 hover:text-slate-500",
+        )}
+      >
+        <AlertTriangle className="h-3.5 w-3.5" fill={danger ? "currentColor" : "none"} />
+      </button>
+      <details className="relative opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+        <summary className="relative flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 [&::-webkit-details-marker]:hidden">
           <span className="text-lg leading-none">⋮</span>
+          {hasMoreFields && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-sky-500" />}
         </summary>
-        <div className="absolute right-0 top-8 z-20 w-44 rounded-md border border-slate-200 bg-white p-1 text-xs shadow-lg">
+        <div className="absolute right-0 top-8 z-20 w-52 rounded-md border border-slate-200 bg-white p-1 text-xs shadow-lg">
           <RowMenuButton
             icon={locked ? Unlock : Lock}
             label={locked ? "Desfixa km" : "Fixa quilometratge"}
             onClick={onToggleLock}
           />
+          <RowMenuButton icon={MapPin} label="Camps addicionals (GPS, traducció)" onClick={onOpenMoreFields} />
           <RowMenuButton icon={Plus} label="Insereix abans" onClick={onInsertBefore} />
           <RowMenuButton icon={Plus} label="Insereix després" onClick={onInsertAfter} />
           <RowMenuButton icon={Copy} label="Duplica (Ctrl+D)" onClick={onDuplicate} />

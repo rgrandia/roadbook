@@ -15,6 +15,7 @@ export function createInstruction(partial: Partial<Instruction> = {}): Instructi
     lockedKm: false,
     direction: "straight",
     category: "normal",
+    danger: false,
     road: {},
     roadType: "none",
     ...partial,

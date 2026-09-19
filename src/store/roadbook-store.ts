@@ -38,6 +38,7 @@ interface RoadbookState {
       Pick<
         Sector,
         | "name"
+        | "sectionLabel"
         | "startLocation"
         | "endLocation"
         | "sectorType"

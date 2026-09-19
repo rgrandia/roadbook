@@ -3,6 +3,7 @@ import { pdf } from "@react-pdf/renderer";
 import { describe, expect, it } from "vitest";
 import { createInstruction, createRoadbook, createSector, createStage } from "@/lib/roadbook/factory";
 import { recalcSector } from "@/lib/roadbook/calc";
+import { DIRECTION_ORDER } from "@/lib/roadbook/direction-icons";
 import type { InstructionCategory } from "@/lib/roadbook/types";
 import { RoadbookPdfDocument } from "./roadbook-document";
 
@@ -27,8 +28,18 @@ function buildSampleRoadbook() {
   const stage = createStage({}, 1);
   const sector = recalcSector(
     createSector({
+      sectionLabel: "Secció A",
       instructions: categories.map((category, i) =>
-        createInstruction({ distance: i + 0.5, category, direction: i % 2 === 0 ? "left" : "right" }),
+        createInstruction({
+          distance: i + 0.5,
+          category,
+          direction: i % 2 === 0 ? "left" : "right",
+          danger: i === 0,
+          destination: i === 0 ? "Sant Gregori\nCartellà" : undefined,
+          informationSecondary: i === 0 ? "Keep right" : undefined,
+          gpsLat: i === 0 ? "N 41 59.420" : undefined,
+          gpsLng: i === 0 ? "E 2 46.462" : undefined,
+        }),
       ),
     }),
   );
@@ -63,6 +74,45 @@ describe("RoadbookPdfDocument", () => {
     const secondStage = createStage({}, 2);
     secondStage.sectors = [recalcSector(createSector({ instructions: [createInstruction({ distance: 3.2 })] }, 2))];
     roadbook.stages.push(secondStage);
+
+    const buffer = await pdf(<RoadbookPdfDocument roadbook={roadbook} />).toBuffer();
+    const chunks: Buffer[] = [];
+    for await (const chunk of buffer) chunks.push(chunk as Buffer);
+    expect(Buffer.concat(chunks).length).toBeGreaterThan(0);
+  });
+
+  it("renders every direction pictogram without throwing", async () => {
+    const roadbook = createRoadbook("All directions");
+    const stage = createStage({}, 1);
+    const sector = recalcSector(
+      createSector({
+        instructions: DIRECTION_ORDER.map((direction) => createInstruction({ distance: 1, direction })),
+      }),
+    );
+    stage.sectors = [sector];
+    roadbook.stages = [stage];
+
+    const buffer = await pdf(<RoadbookPdfDocument roadbook={roadbook} />).toBuffer();
+    const chunks: Buffer[] = [];
+    for await (const chunk of buffer) chunks.push(chunk as Buffer);
+    const bytes = Buffer.concat(chunks);
+    expect(bytes.length).toBeGreaterThan(0);
+    expect(bytes.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
+
+  it("renders a liaison sector's transition bar without throwing", async () => {
+    const roadbook = createRoadbook("Liaison");
+    const stage = createStage({}, 1);
+    const sector = recalcSector(
+      createSector({
+        sectorType: "liaison",
+        startLocation: "Service OUT",
+        endLocation: "Zona de Calibració",
+        instructions: [createInstruction({ distance: 5 })],
+      }),
+    );
+    stage.sectors = [sector];
+    roadbook.stages = [stage];
 
     const buffer = await pdf(<RoadbookPdfDocument roadbook={roadbook} />).toBuffer();
     const chunks: Buffer[] = [];

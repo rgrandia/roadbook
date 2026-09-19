@@ -12,23 +12,12 @@ import {
   Users,
 } from "lucide-react";
 import { DirectionIcon } from "@/components/roadbook/direction-icon";
+import { DIRECTION_LABELS, QUICK_DIRECTIONS } from "@/lib/roadbook/direction-icons";
 import { CATEGORY_DEFS } from "@/lib/roadbook/library";
-import type { DirectionType, Instruction, InstructionCategory } from "@/lib/roadbook/types";
+import type { Instruction, InstructionCategory } from "@/lib/roadbook/types";
 import { cn } from "@/lib/utils";
 
 export type QuickAddPreset = Partial<Pick<Instruction, "direction" | "category">>;
-
-const DIRECTION_BUTTONS: { direction: DirectionType; label: string }[] = [
-  { direction: "left", label: "Esquerra" },
-  { direction: "right", label: "Dreta" },
-  { direction: "straight", label: "Seguir recte" },
-  { direction: "hairpin-left", label: "Tancat esquerra" },
-  { direction: "hairpin-right", label: "Tancat dreta" },
-  { direction: "junction", label: "Cruïlla" },
-  { direction: "roundabout", label: "Rotonda" },
-  { direction: "merge", label: "Incorporació" },
-  { direction: "exit", label: "Sortida de via" },
-];
 
 const CATEGORY_ICONS: Partial<Record<InstructionCategory, React.ComponentType<{ className?: string }>>> = {
   stop: OctagonAlert,
@@ -60,16 +49,16 @@ export function QuickAddToolbar({ onAdd }: { onAdd: (preset: QuickAddPreset) => 
       <div>
         <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Direcció</p>
         <div className="flex flex-wrap gap-1.5">
-          {DIRECTION_BUTTONS.map(({ direction, label }) => (
+          {QUICK_DIRECTIONS.map((direction) => (
             <button
               key={direction}
               type="button"
               onClick={() => onAdd({ direction, category: "normal" })}
-              title={`Afegeix instrucció: ${label}`}
+              title={`Afegeix instrucció: ${DIRECTION_LABELS[direction]}`}
               className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:border-red-300 hover:bg-red-50 hover:text-red-700"
             >
-              <DirectionIcon direction={direction} size={16} />
-              {label}
+              <DirectionIcon direction={direction} size={18} />
+              {DIRECTION_LABELS[direction]}
             </button>
           ))}
         </div>
