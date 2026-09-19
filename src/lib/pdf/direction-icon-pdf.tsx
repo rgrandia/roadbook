@@ -1,11 +1,11 @@
-import { Circle, G, Path, Svg } from "@react-pdf/renderer";
+import { Circle, Path, Svg } from "@react-pdf/renderer";
 import { DIRECTION_GLYPHS } from "@/lib/roadbook/direction-icons";
 import type { DirectionType } from "@/lib/roadbook/types";
 
 /** PDF counterpart of components/roadbook/direction-icon.tsx - same path data, @react-pdf primitives. */
 export function DirectionIconPdf({
   direction,
-  size = 14,
+  size = 20,
   color = "#0f172a",
 }: {
   direction: DirectionType;
@@ -13,22 +13,35 @@ export function DirectionIconPdf({
   color?: string;
 }) {
   const glyph = DIRECTION_GLYPHS[direction];
-  if (!glyph || glyph.paths.length === 0) return null;
-  const transform = [
-    glyph.rotate ? `rotate(${glyph.rotate}, 12, 12)` : null,
-    glyph.mirror ? "scale(-1,1) translate(-24,0)" : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  if (!glyph || glyph.bold.length === 0) return null;
 
   return (
     <Svg viewBox="0 0 24 24" style={{ width: size, height: size }}>
-      <G transform={transform || undefined}>
-        {glyph.paths.map((d, i) => (
-          <Path key={i} d={d} stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        ))}
-        {glyph.dot ? <Circle cx={glyph.dot[0]} cy={glyph.dot[1]} r={glyph.dot[2]} fill={color} /> : null}
-      </G>
+      {glyph.circle ? (
+        <Circle
+          cx={glyph.circle[0]}
+          cy={glyph.circle[1]}
+          r={glyph.circle[2]}
+          stroke={color}
+          strokeWidth={0.9}
+          fill="none"
+        />
+      ) : null}
+      {glyph.thin?.map((d, i) => (
+        <Path key={`thin-${i}`} d={d} stroke={color} strokeWidth={0.9} fill="none" strokeLinecap="round" />
+      ))}
+      {glyph.bold.map((d, i) => (
+        <Path
+          key={`bold-${i}`}
+          d={d}
+          stroke={color}
+          strokeWidth={1.7}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ))}
+      {glyph.dot ? <Circle cx={glyph.dot[0]} cy={glyph.dot[1]} r={glyph.dot[2]} fill={color} /> : null}
     </Svg>
   );
 }
