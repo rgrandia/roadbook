@@ -306,7 +306,7 @@ function InstructionRow({
         <Text style={styles.tabNumber}>{instruction.order}</Text>
       </View>
       <View style={[styles.cellBase, styles.colDir, styles.vDivider]}>
-        <DirectionIconPdf direction={instruction.direction} size={17} />
+        <DirectionIconPdf direction={instruction.direction} size={52} />
       </View>
       <View style={[styles.cellBase, styles.colDist, styles.vDivider]}>
         <Text style={[styles.distValue, styles.cellRight]}>{formatKm(instruction.distance)}</Text>

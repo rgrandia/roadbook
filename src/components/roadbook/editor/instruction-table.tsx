@@ -31,7 +31,7 @@ import type { Instruction, Sector } from "@/lib/roadbook/types";
 import { cn } from "@/lib/utils";
 import { useRoadbookStore } from "@/store/roadbook-store";
 
-const GRID_COLS = "28px 26px 84px 44px 76px 76px 70px 190px 150px 1fr 32px";
+const GRID_COLS = "28px 26px 84px 52px 76px 76px 70px 190px 150px 1fr 32px";
 
 export function InstructionTable({ stageId, sector }: { stageId: string; sector: Sector }) {
   const roadbook = useRoadbookStore((s) => s.roadbook);

@@ -21,12 +21,12 @@ export function DirectionPicker({
         <button
           type="button"
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+            "flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
             className,
           )}
           title={DIRECTION_LABELS[value]}
         >
-          <DirectionIcon direction={value} size={20} />
+          <DirectionIcon direction={value} size={30} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 max-h-96 overflow-y-auto">
@@ -44,11 +44,11 @@ export function DirectionPicker({
                     onClick={() => onChange(direction)}
                     title={DIRECTION_LABELS[direction]}
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-md border text-slate-700 hover:bg-slate-50",
+                      "flex h-12 w-12 items-center justify-center rounded-md border text-slate-700 hover:bg-slate-50",
                       direction === value ? "border-red-500 bg-red-50 text-red-600" : "border-slate-200",
                     )}
                   >
-                    <DirectionIcon direction={direction} size={22} />
+                    <DirectionIcon direction={direction} size={30} />
                   </button>
                 ))}
               </div>
