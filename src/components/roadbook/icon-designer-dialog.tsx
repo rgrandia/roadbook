@@ -64,6 +64,23 @@ export function IconDesignerDialog({
     setForm((f) => ({ ...f, takenAngle: angle }));
   }
 
+  function nudgeAngle(e: React.KeyboardEvent<SVGSVGElement>) {
+    const step = e.shiftKey ? 1 : 5;
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setForm((f) => ({ ...f, takenAngle: clampAngle(f.takenAngle + step) }));
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setForm((f) => ({ ...f, takenAngle: clampAngle(f.takenAngle - step) }));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setForm((f) => ({ ...f, takenAngle: -180 }));
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setForm((f) => ({ ...f, takenAngle: 180 }));
+    }
+  }
+
   function addOtherAngle() {
     setForm((f) => (f.otherAngles.length >= 3 ? f : { ...f, otherAngles: [...f.otherAngles, 90] }));
   }
@@ -130,8 +147,16 @@ export function IconDesignerDialog({
               viewBox="0 0 200 200"
               width={160}
               height={160}
-              className="cursor-crosshair rounded-full border border-slate-200 bg-slate-50"
+              role="slider"
+              tabIndex={0}
+              aria-label="Angle del camí pres"
+              aria-valuemin={-180}
+              aria-valuemax={180}
+              aria-valuenow={form.takenAngle}
+              aria-valuetext={`${form.takenAngle} graus`}
+              className="cursor-crosshair rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
               onClick={pickAngleFromClick}
+              onKeyDown={nudgeAngle}
             >
               <circle cx={100} cy={100} r={92} fill="none" stroke="#e2e8f0" strokeWidth={1} />
               <circle cx={100} cy={100} r={2} fill="#94a3b8" />

@@ -58,7 +58,7 @@ export function ProjectCard({ summary, onDuplicate, onDelete, onExport }: Projec
       <CardContent className="flex flex-wrap items-center gap-1.5">
         <Badge variant="outline">
           <MapPin className="mr-1 h-3 w-3" />
-          {summary.stageCount} etapa{summary.stageCount === 1 ? "" : "es"}
+          {summary.stageCount} {summary.stageCount === 1 ? "etapa" : "etapes"}
         </Badge>
         <Badge variant="outline">
           <Route className="mr-1 h-3 w-3" />
