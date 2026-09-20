@@ -5,7 +5,7 @@ import { createInstruction, createRoadbook, createSector, createStage } from "@/
 import { recalcSector } from "@/lib/roadbook/calc";
 import { DIRECTION_ORDER } from "@/lib/roadbook/direction-icons";
 import type { InstructionCategory } from "@/lib/roadbook/types";
-import { RoadbookPdfDocument } from "./roadbook-document";
+import { RoadbookPdfDocument, buildPrintPages } from "./roadbook-document";
 
 function buildSampleRoadbook() {
   const roadbook = createRoadbook("PDF Smoke Test Rally");
@@ -118,5 +118,53 @@ describe("RoadbookPdfDocument", () => {
     const chunks: Buffer[] = [];
     for await (const chunk of buffer) chunks.push(chunk as Buffer);
     expect(Buffer.concat(chunks).length).toBeGreaterThan(0);
+  });
+});
+
+describe("buildPrintPages", () => {
+  it("chunks a sector's instructions into pages of exactly 4, with a shorter last page", () => {
+    const roadbook = createRoadbook("Paging");
+    const stage = createStage({}, 1);
+    const sector = recalcSector(
+      createSector({ instructions: Array.from({ length: 9 }, (_, i) => createInstruction({ distance: i + 1 })) }),
+    );
+    stage.sectors = [sector];
+    roadbook.stages = [stage];
+
+    const pages = buildPrintPages(roadbook);
+    expect(pages.map((p) => p.instructions.length)).toEqual([4, 4, 1]);
+  });
+
+  it("gives every sector its own page run, never mixing two sectors on one page", () => {
+    const roadbook = createRoadbook("Paging multi-sector");
+    const stage = createStage({}, 1);
+    const sectorA = recalcSector(
+      createSector({ instructions: Array.from({ length: 5 }, () => createInstruction({ distance: 1 })) }, 1),
+    );
+    const sectorB = recalcSector(
+      createSector({ instructions: Array.from({ length: 2 }, () => createInstruction({ distance: 1 })) }, 2),
+    );
+    stage.sectors = [sectorA, sectorB];
+    roadbook.stages = [stage];
+
+    const pages = buildPrintPages(roadbook);
+    expect(pages.map((p) => [p.sector?.id, p.instructions.length])).toEqual([
+      [sectorA.id, 4],
+      [sectorA.id, 1],
+      [sectorB.id, 2],
+    ]);
+  });
+
+  it("emits a placeholder page for a stage with no sectors and a sector with no instructions", () => {
+    const roadbook = createRoadbook("Paging empties");
+    const emptyStage = createStage({}, 1);
+    const stageWithEmptySector = createStage({}, 2);
+    stageWithEmptySector.sectors = [createSector({}, 1)];
+    roadbook.stages = [emptyStage, stageWithEmptySector];
+
+    const pages = buildPrintPages(roadbook);
+    expect(pages).toHaveLength(2);
+    expect(pages[0].sector).toBeNull();
+    expect(pages[1].instructions).toEqual([]);
   });
 });

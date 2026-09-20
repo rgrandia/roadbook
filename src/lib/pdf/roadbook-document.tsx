@@ -17,6 +17,16 @@ const COLORS = {
   headerBg: "#f1f5f9",
 };
 
+/** Exactly this many instructions print per page (spec: big, legible steps). */
+const STEPS_PER_PAGE = 4;
+const ROW_HEIGHT = 140;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 78,
@@ -91,70 +101,79 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: "row",
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
-    minHeight: 26,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.ink,
+    minHeight: ROW_HEIGHT,
     alignItems: "stretch",
   },
-  cellBase: { paddingHorizontal: 3, paddingVertical: 3, justifyContent: "center" },
-  vDivider: { borderRightWidth: 0.5, borderRightColor: COLORS.border },
+  cellBase: { paddingHorizontal: 8, paddingVertical: 8, justifyContent: "center" },
+  vDivider: { borderRightWidth: 0.75, borderRightColor: COLORS.border },
   cellCenter: { textAlign: "center" },
   cellRight: { textAlign: "right" },
 
-  colTab: { width: 12 },
-  colDir: { width: 34, alignItems: "center", justifyContent: "center" },
-  colDist: { width: 28 },
-  colTotal: { width: 32 },
-  colPartial: { width: 28 },
+  colTab: { width: 26 },
+  colDir: { width: 76, alignItems: "center", justifyContent: "center" },
+  colDist: { width: 58 },
+  colTotal: { width: 76 },
+  colPartial: { width: 56 },
   colInfo: { flex: 1 },
-  colRegr: { width: 30 },
+  colRegr: { width: 56 },
 
-  tabNumber: { fontSize: 6, color: "#fff", backgroundColor: COLORS.ink, textAlign: "center", paddingVertical: 1 },
-  distValue: { fontSize: 8 },
-  totalValue: { fontSize: 10.5, fontFamily: "Helvetica-Bold" },
-  partialValue: { fontSize: 7.5, color: COLORS.muted },
-  regrValue: { fontSize: 7.5, color: COLORS.muted },
-
-  roadHeader: { fontSize: 7, fontFamily: "Helvetica-Bold", textTransform: "uppercase", marginBottom: 1 },
-  roadBadge: {
-    borderWidth: 0.75,
-    borderColor: COLORS.ink,
-    borderRadius: 2,
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    fontSize: 6.5,
+  tabNumber: {
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    marginRight: 3,
+    color: "#fff",
+    backgroundColor: COLORS.ink,
+    textAlign: "center",
+    paddingVertical: 3,
+    borderRadius: 2,
+  },
+  distValue: { fontSize: 13 },
+  totalValue: { fontSize: 27, fontFamily: "Helvetica-Bold" },
+  partialValue: { fontSize: 13, color: COLORS.muted },
+  regrValue: { fontSize: 13, color: COLORS.muted },
+
+  roadHeader: { fontSize: 10, fontFamily: "Helvetica-Bold", textTransform: "uppercase", marginBottom: 2 },
+  roadBadge: {
+    borderWidth: 1,
+    borderColor: COLORS.ink,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    marginRight: 4,
   },
   destRow: { flexDirection: "row", alignItems: "center", gap: 2 },
-  destText: { fontSize: 7.5 },
-  infoText: { fontSize: 8, fontFamily: "Helvetica-Bold" },
-  infoSecondary: { fontSize: 7, fontStyle: "italic", color: COLORS.muted },
-  gpsText: { fontSize: 6, color: COLORS.muted, marginTop: 1 },
+  destText: { fontSize: 12 },
+  infoText: { fontSize: 13, fontFamily: "Helvetica-Bold" },
+  infoSecondary: { fontSize: 10.5, fontStyle: "italic", color: COLORS.muted },
+  gpsText: { fontSize: 8, color: COLORS.muted, marginTop: 2 },
 
   dangerBadge: {
     borderWidth: 1,
     borderColor: COLORS.ink,
     backgroundColor: COLORS.ink,
     color: "#fff",
-    fontSize: 8,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
     paddingVertical: 1,
-    marginRight: 3,
+    marginRight: 4,
   },
 
   bannerRow: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.ink,
-    paddingVertical: 3,
-    marginVertical: 1.5,
+    minHeight: ROW_HEIGHT,
+    paddingHorizontal: 8,
+    marginVertical: 2,
   },
-  bannerLabel: { fontSize: 9, fontFamily: "Helvetica-Bold", textTransform: "uppercase", flex: 1 },
-  bannerKm: { fontSize: 9, fontFamily: "Helvetica-Bold" },
-  stopOctagon: { width: 16, height: 16, marginHorizontal: 6 },
+  bannerLabel: { fontSize: 18, fontFamily: "Helvetica-Bold", textTransform: "uppercase", flex: 1 },
+  bannerKm: { fontSize: 18, fontFamily: "Helvetica-Bold" },
+  stopOctagon: { width: 34, height: 34, marginHorizontal: 10 },
 
   empty: { fontSize: 8, color: COLORS.muted, fontStyle: "italic", paddingVertical: 6 },
 });
@@ -162,7 +181,7 @@ const styles = StyleSheet.create({
 function DocHeader({ roadbook }: { roadbook: Roadbook }) {
   const { settings } = roadbook;
   return (
-    <View style={styles.header} fixed>
+    <View style={styles.header}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer's Image has no alt prop */}
@@ -182,7 +201,7 @@ function DocHeader({ roadbook }: { roadbook: Roadbook }) {
 
 function ColumnHeader() {
   return (
-    <View style={styles.columnHeader} fixed>
+    <View style={styles.columnHeader}>
       <Text style={[styles.cellBase, styles.colTab]} />
       <Text style={[styles.cellBase, styles.colDir, styles.cellCenter]}>Dir.</Text>
       <Text style={[styles.cellBase, styles.colDist, styles.cellRight]}>Dist.</Text>
@@ -338,13 +357,47 @@ function BannerRow({ instruction }: { instruction: Instruction }) {
   );
 }
 
-function SectorSection({ stage, sector, roadbook }: { stage: Stage; sector: Sector; roadbook: Roadbook }) {
+/**
+ * One printable page's worth of content: a stage/sector for context, and at
+ * most STEPS_PER_PAGE instructions. Computed up front (rather than relying
+ * on @react-pdf/renderer's automatic `wrap`/`break` reflow) because `break`
+ * turned out to be unreliable across more than one consecutive forced break
+ * in this version - trailing short chunks would silently merge onto the
+ * previous page instead of starting a new one. Emitting one explicit <Page>
+ * per chunk sidesteps that entirely and is easy to unit-test (assert a page
+ * count for N instructions).
+ */
+interface PrintPagePlan {
+  stage: Stage;
+  sector: Sector | null;
+  instructions: Instruction[];
+}
+
+export function buildPrintPages(roadbook: Roadbook): PrintPagePlan[] {
+  const pages: PrintPagePlan[] = [];
+  for (const stage of roadbook.stages) {
+    if (stage.sectors.length === 0) {
+      pages.push({ stage, sector: null, instructions: [] });
+      continue;
+    }
+    for (const sector of stage.sectors) {
+      if (sector.instructions.length === 0) {
+        pages.push({ stage, sector, instructions: [] });
+        continue;
+      }
+      for (const instructions of chunk(sector.instructions, STEPS_PER_PAGE)) {
+        pages.push({ stage, sector, instructions });
+      }
+    }
+  }
+  return pages;
+}
+
+function SectorContext({ stage, sector, roadbook }: { stage: Stage; sector: Sector; roadbook: Roadbook }) {
   const showTransition = sector.sectorType === "liaison" && (sector.startLocation || sector.endLocation);
-
   return (
-    <View wrap>
+    <>
       <SectorMetaGrid stage={stage} sector={sector} startPageNumber={roadbook.settings.startPageNumber} />
-
       {showTransition ? (
         <View style={styles.transitionBar}>
           <Text style={styles.transitionText}>{sector.startLocation || "?"}</Text>
@@ -362,46 +415,42 @@ function SectorSection({ stage, sector, roadbook }: { stage: Stage; sector: Sect
           {sector.notes ? <Text style={styles.sectorSub}>{sector.notes}</Text> : null}
         </View>
       )}
-
-      <ColumnHeader />
-
-      {sector.instructions.length === 0 ? (
-        <Text style={styles.empty}>Sense instruccions.</Text>
-      ) : (
-        sector.instructions.map((instruction, i) => {
-          const categoryDef = CATEGORY_MAP[instruction.category];
-          return categoryDef.banner ? (
-            <BannerRow key={instruction.id} instruction={instruction} />
-          ) : (
-            <InstructionRow
-              key={instruction.id}
-              instruction={instruction}
-              index={i}
-              regressive={instructionKmRegressive(sector, instruction)}
-            />
-          );
-        })
-      )}
-    </View>
+    </>
   );
 }
 
-function StagePage({ stage, roadbook }: { stage: Stage; roadbook: Roadbook }) {
+function PrintPage({ plan, roadbook }: { plan: PrintPagePlan; roadbook: Roadbook }) {
+  const { sector } = plan;
   return (
-    <Page size="A4" orientation={roadbook.settings.orientation} style={styles.page} wrap>
+    <Page size="A4" orientation={roadbook.settings.orientation} style={styles.page}>
       <DocHeader roadbook={roadbook} />
-      {stage.sectors.length === 0 ? (
+      {!sector ? (
         <Text style={styles.empty}>Aquesta etapa no té sectors.</Text>
       ) : (
-        stage.sectors.map((sector, i) => (
-          <View key={sector.id} break={i > 0}>
-            <SectorSection stage={stage} sector={sector} roadbook={roadbook} />
-          </View>
-        ))
+        <>
+          <SectorContext stage={plan.stage} sector={sector} roadbook={roadbook} />
+          <ColumnHeader />
+          {plan.instructions.length === 0 ? (
+            <Text style={styles.empty}>Sense instruccions.</Text>
+          ) : (
+            plan.instructions.map((instruction, i) => {
+              const categoryDef = CATEGORY_MAP[instruction.category];
+              return categoryDef.banner ? (
+                <BannerRow key={instruction.id} instruction={instruction} />
+              ) : (
+                <InstructionRow
+                  key={instruction.id}
+                  instruction={instruction}
+                  index={i}
+                  regressive={instructionKmRegressive(sector, instruction)}
+                />
+              );
+            })
+          )}
+        </>
       )}
       <Text
         style={styles.footer}
-        fixed
         render={({ pageNumber, totalPages }) =>
           `${roadbook.settings.rallyName || roadbook.name} · Pàgina ${roadbook.settings.startPageNumber + pageNumber - 1} de ${roadbook.settings.startPageNumber + totalPages - 1}`
         }
@@ -411,15 +460,19 @@ function StagePage({ stage, roadbook }: { stage: Stage; roadbook: Roadbook }) {
 }
 
 export function RoadbookPdfDocument({ roadbook }: { roadbook: Roadbook }) {
+  const pages = roadbook.stages.length === 0 ? [] : buildPrintPages(roadbook);
+
   return (
     <Document title={roadbook.settings.rallyName || roadbook.name} author={roadbook.settings.organization}>
-      {roadbook.stages.length === 0 ? (
+      {pages.length === 0 ? (
         <Page size="A4" style={styles.page}>
           <DocHeader roadbook={roadbook} />
           <Text style={styles.empty}>Aquest roadbook encara no té etapes.</Text>
         </Page>
       ) : (
-        roadbook.stages.map((stage) => <StagePage key={stage.id} stage={stage} roadbook={roadbook} />)
+        pages.map((plan, i) => (
+          <PrintPage key={`${plan.stage.id}-${plan.sector?.id ?? "empty"}-${i}`} plan={plan} roadbook={roadbook} />
+        ))
       )}
     </Document>
   );

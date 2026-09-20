@@ -96,19 +96,20 @@ function mirrorGlyph(g: DirectionGlyph): DirectionGlyph {
   };
 }
 
-// ---- Simple turns: hand-tuned per magnitude, right side only - left is mirrored. ----
+// ---- Simple turns: one parametric curve covers everything from a barely-there
+// bend up through a normal 90 degree turn; only the hairpin needs a sharper,
+// hand-tuned hook shape (a single quadratic pinches when start/end get close). ----
 
-const TURN_STRAIGHT: DirectionGlyph = { bold: [line(ENTRY, [12, 3]), arrowHead([12, 3], 0)], dot: DOT };
+function turn(angleDeg: number, radius = 9.5): DirectionGlyph {
+  const exit = polar(CENTER, radius, angleDeg);
+  return { bold: [curve(ENTRY, [12, 12], exit), arrowHead(exit, angleDeg)], dot: DOT };
+}
 
-const TURN_SLIGHT_RIGHT: DirectionGlyph = {
-  bold: [curve(ENTRY, [12, 12], [18, 5]), arrowHead([18, 5], 35)],
-  dot: DOT,
-};
-
-const TURN_RIGHT: DirectionGlyph = {
-  bold: [curve(ENTRY, [12, 13], [21, 12]), arrowHead([21, 12], 90)],
-  dot: DOT,
-};
+const TURN_STRAIGHT = turn(0);
+const TURN_VERY_SLIGHT_RIGHT = turn(15);
+const TURN_SLIGHT_RIGHT = turn(30);
+const TURN_MEDIUM_RIGHT = turn(60);
+const TURN_RIGHT = turn(90);
 
 const TURN_HAIRPIN_RIGHT: DirectionGlyph = {
   bold: [doubleCurve(ENTRY, [12, 9], [19, 6], [24, 9], [19, 16]), arrowHead([19, 16], 160)],
@@ -137,25 +138,57 @@ function roundabout(exitAngle: number): DirectionGlyph {
   };
 }
 
-/** Gentle Y-shaped fork: bold on the branch kept, thin on the other. Right side; mirror for left. */
-const FORK_RIGHT: DirectionGlyph = {
-  bold: [line(ENTRY, [12, 15]), curve([12, 15], [16, 10], [19, 5]), arrowHead([19, 5], 35)],
-  thin: [curve([12, 15], [10, 10], [7, 5])],
-  dot: DOT,
-};
+/** Gentle Y-shaped fork: bold on the branch kept, thin on the other. `keepAngle` right-side; mirror for left. */
+function fork(keepAngle: number): DirectionGlyph {
+  const bend: Point = [12, 15];
+  const exit = polar(CENTER, 10, keepAngle);
+  const otherExit = polar(CENTER, 9, keepAngle > 0 ? keepAngle - 70 : keepAngle + 70);
+  return {
+    bold: [line(ENTRY, bend), curve(bend, [16, 10], exit), arrowHead(exit, keepAngle)],
+    thin: [curve(bend, [10, 10], otherExit)],
+    dot: DOT,
+  };
+}
 
-/** Multi-lane motorway pictograms: a slight/sharp bold lane plus a thin parallel lane. Right side; mirror for left. */
-const MOTORWAY_KEEP_RIGHT: DirectionGlyph = {
-  bold: [curve(ENTRY, [12, 13], [17, 4]), arrowHead([17, 4], 28)],
-  thin: [curve([8, 21], [9, 13], [12, 4])],
-  dot: DOT,
-};
+const FORK_RIGHT = fork(35);
+const FORK_SLIGHT_RIGHT = fork(20);
+const FORK_SHARP_RIGHT = fork(55);
 
-const MOTORWAY_EXIT_RIGHT: DirectionGlyph = {
-  bold: [curve(ENTRY, [12, 14], [20, 9]), arrowHead([20, 9], 65)],
-  thin: [line([12, 20], [12, 2])],
-  dot: DOT,
-};
+/** Multi-lane motorway pictograms: a bold lane at `angleDeg` plus a thin parallel lane. Right side; mirror for left. */
+function motorwayKeep(angleDeg: number): DirectionGlyph {
+  const sign = angleDeg >= 0 ? 1 : -1;
+  const exit = polar(CENTER, 9.5, angleDeg);
+  return {
+    bold: [curve(ENTRY, [12, 13], exit), arrowHead(exit, angleDeg)],
+    thin: [curve([12 - 4 * sign, 21], [12 - 3 * sign, 13], [exit[0] - 4 * sign, exit[1] + 1])],
+    dot: DOT,
+  };
+}
+
+function motorwayExit(angleDeg: number): DirectionGlyph {
+  const exit = polar(CENTER, 10, angleDeg);
+  return {
+    bold: [curve(ENTRY, [12, 14], exit), arrowHead(exit, angleDeg)],
+    thin: [line([12, 20], [12, 2])],
+    dot: DOT,
+  };
+}
+
+function motorwayFork(angleDeg: number): DirectionGlyph {
+  const sign = angleDeg >= 0 ? 1 : -1;
+  const exit = polar(CENTER, 10, angleDeg);
+  const otherExit = polar(CENTER, 9, -angleDeg * 0.4);
+  return {
+    bold: [line(ENTRY, [12, 15]), curve([12, 15], [12 + 4 * sign, 10], exit), arrowHead(exit, angleDeg)],
+    thin: [curve([12, 15], [12 - 2 * sign, 10], otherExit)],
+    dot: DOT,
+  };
+}
+
+const MOTORWAY_KEEP_RIGHT = motorwayKeep(28);
+const MOTORWAY_EXIT_RIGHT = motorwayExit(65);
+const MOTORWAY_EXIT_SLIGHT_RIGHT = motorwayExit(40);
+const MOTORWAY_FORK_RIGHT = motorwayFork(30);
 
 const MOTORWAY_MERGE_RIGHT: DirectionGlyph = {
   bold: [line(ENTRY, [12, 3]), arrowHead([12, 3], 0)],
@@ -163,14 +196,36 @@ const MOTORWAY_MERGE_RIGHT: DirectionGlyph = {
   dot: DOT,
 };
 
+/** S-bend: curves one way then the other, ending roughly back on the original heading. */
+function sBend(firstSign: 1 | -1): DirectionGlyph {
+  const end = polar(CENTER, 9, firstSign * -20);
+  return {
+    bold: [
+      doubleCurve(
+        ENTRY,
+        [12 + firstSign * 6, 15],
+        [12 + firstSign * 5, 11],
+        [12 - firstSign * 6, 9],
+        end,
+      ),
+      arrowHead(end, firstSign * -20),
+    ],
+    dot: DOT,
+  };
+}
+
 const HOOK_U_TURN = "M7 4v7a5 5 0 0 0 10 0V6M13 5l4 -1.2v6";
 
 export const DIRECTION_GLYPHS: Record<DirectionType, DirectionGlyph> = {
   straight: TURN_STRAIGHT,
+  "very-slight-right": TURN_VERY_SLIGHT_RIGHT,
   "slight-right": TURN_SLIGHT_RIGHT,
+  "medium-right": TURN_MEDIUM_RIGHT,
   right: TURN_RIGHT,
   "hairpin-right": TURN_HAIRPIN_RIGHT,
+  "very-slight-left": mirrorGlyph(TURN_VERY_SLIGHT_RIGHT),
   "slight-left": mirrorGlyph(TURN_SLIGHT_RIGHT),
+  "medium-left": mirrorGlyph(TURN_MEDIUM_RIGHT),
   left: mirrorGlyph(TURN_RIGHT),
   "hairpin-left": mirrorGlyph(TURN_HAIRPIN_RIGHT),
 
@@ -179,22 +234,37 @@ export const DIRECTION_GLYPHS: Record<DirectionType, DirectionGlyph> = {
   "crossroads-straight": junction(0, [-90, 90]),
   "crossroads-right": junction(90, [0, -90]),
   "crossroads-left": junction(-90, [0, 90]),
+  "crossroads-slight-right": junction(45, [-90, 90]),
+  "crossroads-slight-left": junction(-45, [-90, 90]),
 
   "roundabout-1": roundabout(120),
   "roundabout-2": roundabout(60),
   "roundabout-3": roundabout(0),
   "roundabout-4": roundabout(-60),
   "roundabout-5": roundabout(-120),
+  "roundabout-6": roundabout(-150),
+  "roundabout-uturn": roundabout(155),
 
   "fork-right": FORK_RIGHT,
   "fork-left": mirrorGlyph(FORK_RIGHT),
+  "fork-slight-right": FORK_SLIGHT_RIGHT,
+  "fork-slight-left": mirrorGlyph(FORK_SLIGHT_RIGHT),
+  "fork-sharp-right": FORK_SHARP_RIGHT,
+  "fork-sharp-left": mirrorGlyph(FORK_SHARP_RIGHT),
 
   "motorway-keep-right": MOTORWAY_KEEP_RIGHT,
   "motorway-keep-left": mirrorGlyph(MOTORWAY_KEEP_RIGHT),
   "motorway-exit-right": MOTORWAY_EXIT_RIGHT,
   "motorway-exit-left": mirrorGlyph(MOTORWAY_EXIT_RIGHT),
+  "motorway-exit-slight-right": MOTORWAY_EXIT_SLIGHT_RIGHT,
+  "motorway-exit-slight-left": mirrorGlyph(MOTORWAY_EXIT_SLIGHT_RIGHT),
   "motorway-merge-right": MOTORWAY_MERGE_RIGHT,
   "motorway-merge-left": mirrorGlyph(MOTORWAY_MERGE_RIGHT),
+  "motorway-fork-right": MOTORWAY_FORK_RIGHT,
+  "motorway-fork-left": mirrorGlyph(MOTORWAY_FORK_RIGHT),
+
+  "s-bend-left-right": sBend(-1),
+  "s-bend-right-left": sBend(1),
 
   "u-turn": { bold: [HOOK_U_TURN], dot: DOT },
   none: { bold: [] },
@@ -202,10 +272,14 @@ export const DIRECTION_GLYPHS: Record<DirectionType, DirectionGlyph> = {
 
 export const DIRECTION_LABELS: Record<DirectionType, string> = {
   straight: "Seguir recte",
+  "very-slight-right": "Molt lleuger dreta",
   "slight-right": "Lleuger dreta",
+  "medium-right": "Dreta mitjà",
   right: "Dreta",
   "hairpin-right": "Tancat dreta",
+  "very-slight-left": "Molt lleuger esquerra",
   "slight-left": "Lleuger esquerra",
+  "medium-left": "Esquerra mitjà",
   left: "Esquerra",
   "hairpin-left": "Tancat esquerra",
   "tjunction-right": "Cruïlla en T, dreta",
@@ -213,19 +287,33 @@ export const DIRECTION_LABELS: Record<DirectionType, string> = {
   "crossroads-straight": "Encreuament, recte",
   "crossroads-right": "Encreuament, dreta",
   "crossroads-left": "Encreuament, esquerra",
+  "crossroads-slight-right": "Encreuament, diagonal dreta",
+  "crossroads-slight-left": "Encreuament, diagonal esquerra",
   "roundabout-1": "Rotonda, 1a sortida",
   "roundabout-2": "Rotonda, 2a sortida",
   "roundabout-3": "Rotonda, 3a sortida",
   "roundabout-4": "Rotonda, 4a sortida",
   "roundabout-5": "Rotonda, 5a sortida",
+  "roundabout-6": "Rotonda, 6a sortida",
+  "roundabout-uturn": "Rotonda, mitja volta",
   "fork-right": "Desviament dreta",
   "fork-left": "Desviament esquerra",
+  "fork-slight-right": "Desviament lleuger dreta",
+  "fork-slight-left": "Desviament lleuger esquerra",
+  "fork-sharp-right": "Desviament tancat dreta",
+  "fork-sharp-left": "Desviament tancat esquerra",
   "motorway-keep-right": "Mantenir-se a la dreta",
   "motorway-keep-left": "Mantenir-se a l'esquerra",
   "motorway-exit-right": "Sortida per la dreta",
   "motorway-exit-left": "Sortida per l'esquerra",
+  "motorway-exit-slight-right": "Sortida suau per la dreta",
+  "motorway-exit-slight-left": "Sortida suau per l'esquerra",
   "motorway-merge-right": "Incorporació per la dreta",
   "motorway-merge-left": "Incorporació per l'esquerra",
+  "motorway-fork-right": "Bifurcació, carril dreta",
+  "motorway-fork-left": "Bifurcació, carril esquerra",
+  "s-bend-left-right": "Revolt en S, esquerra-dreta",
+  "s-bend-right-left": "Revolt en S, dreta-esquerra",
   "u-turn": "Mitja volta",
   none: "Sense direcció",
 };
@@ -234,26 +322,64 @@ export const DIRECTION_LABELS: Record<DirectionType, string> = {
 export const DIRECTION_GROUPS: { label: string; directions: DirectionType[] }[] = [
   {
     label: "Girs",
-    directions: ["left", "right", "straight", "slight-left", "slight-right", "hairpin-left", "hairpin-right"],
+    directions: [
+      "straight",
+      "very-slight-left",
+      "very-slight-right",
+      "slight-left",
+      "slight-right",
+      "medium-left",
+      "medium-right",
+      "left",
+      "right",
+      "hairpin-left",
+      "hairpin-right",
+    ],
   },
   {
     label: "Cruïlles",
-    directions: ["tjunction-left", "tjunction-right", "crossroads-left", "crossroads-right", "crossroads-straight"],
+    directions: [
+      "tjunction-left",
+      "tjunction-right",
+      "crossroads-left",
+      "crossroads-right",
+      "crossroads-straight",
+      "crossroads-slight-left",
+      "crossroads-slight-right",
+    ],
   },
-  { label: "Rotondes", directions: ["roundabout-1", "roundabout-2", "roundabout-3", "roundabout-4", "roundabout-5"] },
-  { label: "Desviaments", directions: ["fork-left", "fork-right"] },
+  {
+    label: "Rotondes",
+    directions: [
+      "roundabout-1",
+      "roundabout-2",
+      "roundabout-3",
+      "roundabout-4",
+      "roundabout-5",
+      "roundabout-6",
+      "roundabout-uturn",
+    ],
+  },
+  {
+    label: "Desviaments",
+    directions: ["fork-slight-left", "fork-slight-right", "fork-left", "fork-right", "fork-sharp-left", "fork-sharp-right"],
+  },
   {
     label: "Autopista / autovia",
     directions: [
       "motorway-keep-left",
       "motorway-keep-right",
+      "motorway-exit-slight-left",
+      "motorway-exit-slight-right",
       "motorway-exit-left",
       "motorway-exit-right",
       "motorway-merge-left",
       "motorway-merge-right",
+      "motorway-fork-left",
+      "motorway-fork-right",
     ],
   },
-  { label: "Altres", directions: ["u-turn"] },
+  { label: "Altres", directions: ["s-bend-left-right", "s-bend-right-left", "u-turn"] },
 ];
 
 /** Curated subset for the quick-add toolbar's big buttons - the rest live in the full picker. */
