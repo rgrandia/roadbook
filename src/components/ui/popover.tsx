@@ -12,7 +12,7 @@ export function PopoverContent({ className, sideOffset = 6, ...props }: PopoverP
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         sideOffset={sideOffset}
-        className={cn("z-50 rounded-lg border border-slate-200 bg-white p-2 shadow-lg", className)}
+        className={cn("z-50 rounded-xl border border-slate-200/80 bg-white p-2 shadow-lg shadow-slate-900/10", className)}
         {...props}
       />
     </PopoverPrimitive.Portal>

@@ -117,12 +117,12 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
             </Select>
           </div>
 
-          <div className="ml-auto flex items-end gap-3 text-right">
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5">
+          <div className="ml-auto flex items-end gap-2 text-right">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5">
               <p className="text-[11px] uppercase tracking-wide text-slate-400">Distància</p>
               <p className="text-lg font-semibold tabular-nums text-slate-900">{formatKm(totalDistance)} km</p>
             </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5">
               <p className="text-[11px] uppercase tracking-wide text-slate-400">Temps estimat</p>
               <p className="text-lg font-semibold tabular-nums text-slate-900">{formatMinutes(estimatedMinutes)}</p>
             </div>
@@ -144,7 +144,7 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
         </div>
 
         {warnings.length > 0 && (
-          <div className="flex flex-col gap-1 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+          <div className="flex flex-col gap-1 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
             {warnings.map((w) => (
               <div key={w.id} className="flex items-center gap-1.5">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />

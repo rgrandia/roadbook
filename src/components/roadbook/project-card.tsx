@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Copy, Download, MapPin, MoreVertical, Route, Trash2 } from "lucide-react";
+import { ArrowRight, Copy, Download, MapPin, MoreVertical, Route, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,15 +24,21 @@ interface ProjectCardProps {
 
 export function ProjectCard({ summary, onDuplicate, onDelete, onExport }: ProjectCardProps) {
   return (
-    <Card className="flex flex-col justify-between transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-      <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
-        <div className="min-w-0">
-          <CardTitle className="truncate">{summary.name}</CardTitle>
-          <p className="mt-0.5 text-xs text-slate-400">Actualitzat {formatRelativeTime(summary.updatedAt)}</p>
+    <Card className="group flex flex-col justify-between overflow-hidden transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70">
+      <div className="h-1 bg-gradient-to-r from-red-500 to-red-600" />
+      <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-2">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+            <Route className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 pt-0.5">
+            <p className="truncate text-base font-semibold tracking-tight text-slate-900">{summary.name}</p>
+            <p className="mt-0.5 text-xs text-slate-400">Actualitzat {formatRelativeTime(summary.updatedAt)}</p>
+          </div>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Més accions">
+            <Button variant="ghost" size="icon" className="shrink-0" aria-label="Més accions">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -49,7 +55,7 @@ export function ProjectCard({ summary, onDuplicate, onDelete, onExport }: Projec
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-1.5">
+      <CardContent className="flex flex-wrap items-center gap-1.5">
         <Badge variant="outline">
           <MapPin className="mr-1 h-3 w-3" />
           {summary.stageCount} etapa{summary.stageCount === 1 ? "" : "es"}
@@ -58,13 +64,16 @@ export function ProjectCard({ summary, onDuplicate, onDelete, onExport }: Projec
           <Route className="mr-1 h-3 w-3" />
           {summary.sectorCount} sector{summary.sectorCount === 1 ? "" : "s"}
         </Badge>
-        <Badge variant="default" className="bg-red-50 text-red-700">
-          {formatKm(summary.totalDistanceKm)} km
-        </Badge>
+        <span className="ml-auto text-sm font-bold tabular-nums text-slate-900">
+          {formatKm(summary.totalDistanceKm)} <span className="text-xs font-medium text-slate-400">km</span>
+        </span>
       </CardContent>
       <CardFooter>
         <Button asChild variant="primary" className="w-full">
-          <Link href={`/r/${summary.id}`}>Obre</Link>
+          <Link href={`/r/${summary.id}`}>
+            Obre
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </Button>
       </CardFooter>
     </Card>

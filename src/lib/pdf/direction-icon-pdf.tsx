@@ -1,18 +1,21 @@
 import { Circle, Path, Svg } from "@react-pdf/renderer";
-import { DIRECTION_GLYPHS } from "@/lib/roadbook/direction-icons";
+import { DIRECTION_GLYPHS, type DirectionGlyph } from "@/lib/roadbook/direction-icons";
 import type { DirectionType } from "@/lib/roadbook/types";
 
 /** PDF counterpart of components/roadbook/direction-icon.tsx - same path data, @react-pdf primitives. */
 export function DirectionIconPdf({
   direction,
+  glyph: glyphOverride,
   size = 20,
   color = "#0f172a",
 }: {
   direction: DirectionType;
+  /** Precomputed glyph to render instead of the built-in table lookup (custom icons). */
+  glyph?: DirectionGlyph;
   size?: number;
   color?: string;
 }) {
-  const glyph = DIRECTION_GLYPHS[direction];
+  const glyph = glyphOverride ?? DIRECTION_GLYPHS[direction];
   if (!glyph || glyph.bold.length === 0) return null;
 
   return (

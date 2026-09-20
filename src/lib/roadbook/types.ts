@@ -66,7 +66,8 @@ export type DirectionType =
   | "s-bend-left-right"
   | "s-bend-right-left"
   | "u-turn"
-  | "none";
+  | "none"
+  | "custom";
 
 /**
  * What kind of row this is. "normal" is a regular direction instruction;
@@ -101,6 +102,8 @@ export interface Instruction {
   lockedKm: boolean;
 
   direction: DirectionType;
+  /** Set when direction === "custom": id of the user-designed icon (see CustomDirectionIcon). */
+  customIconId?: string;
   category: InstructionCategory;
   /**
    * Danger/caution marker ("!!" in printed roadbooks), independent of
@@ -203,6 +206,25 @@ export const DEFAULT_SETTINGS: RoadbookSettings = {
   language: "ca",
   orientation: "portrait",
 };
+
+/**
+ * A user-designed direction pictogram, saved to the browser's local icon
+ * library (not tied to a single roadbook - see src/lib/db.ts). Built with
+ * the same parametric junction/roundabout model as the built-in icons
+ * (see buildCustomGlyph in direction-icons.ts), so it stays visually
+ * consistent with the rest of the set: `takenAngle` is the bold road
+ * actually travelled (0 = straight ahead, positive = clockwise/right),
+ * `otherAngles` are thin untaken-arm stubs at the same junction (ignored
+ * when `roundabout` is set, which draws a roundabout circle instead).
+ */
+export interface CustomDirectionIcon {
+  id: Id;
+  name: string;
+  takenAngle: number;
+  otherAngles: number[];
+  roundabout: boolean;
+  createdAt: string;
+}
 
 /** Lightweight summary used by the dashboard, derived from a Roadbook. */
 export interface RoadbookSummary {

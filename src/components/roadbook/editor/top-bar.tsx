@@ -28,7 +28,7 @@ export function TopBar({
   const [draft, setDraft] = useState(roadbook.name);
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-900 px-3">
+    <header className="z-10 flex h-14 shrink-0 items-center gap-2 border-b border-slate-800/60 bg-slate-900/95 px-3 shadow-sm backdrop-blur-md">
       <Button variant="ghost" size="icon" className={cn("md:hidden", darkGhost)} onClick={onToggleSidebar} aria-label="Estructura">
         <Menu className="h-4 w-4" />
       </Button>

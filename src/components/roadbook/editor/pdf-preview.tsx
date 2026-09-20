@@ -1,6 +1,8 @@
 "use client";
 
 import { PDFViewer } from "@react-pdf/renderer";
+import { useLiveQuery } from "dexie-react-hooks";
+import { getDb } from "@/lib/db";
 import { RoadbookPdfDocument } from "@/lib/pdf/roadbook-document";
 import type { Roadbook } from "@/lib/roadbook/types";
 
@@ -11,6 +13,8 @@ import type { Roadbook } from "@/lib/roadbook/types";
  * literal PDF, per spec section 17.
  */
 export function PdfPreview({ roadbook }: { roadbook: Roadbook }) {
+  const customIcons = useLiveQuery(() => getDb().customIcons.toArray(), []);
+
   return (
     <div className="flex-1 bg-slate-200 p-4">
       <PDFViewer
@@ -18,7 +22,7 @@ export function PdfPreview({ roadbook }: { roadbook: Roadbook }) {
         className="h-full w-full rounded-md border border-slate-300"
         showToolbar
       >
-        <RoadbookPdfDocument roadbook={roadbook} />
+        <RoadbookPdfDocument roadbook={roadbook} customIcons={customIcons ?? []} />
       </PDFViewer>
     </div>
   );

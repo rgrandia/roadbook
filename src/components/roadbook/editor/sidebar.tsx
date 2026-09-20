@@ -81,6 +81,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         className={cn(
           "z-40 flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white transition-transform",
           "fixed bottom-0 left-0 top-14 md:static md:top-auto md:translate-x-0",
+          "md:overflow-hidden md:rounded-2xl md:border md:border-slate-200/80 md:shadow-sm",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -196,7 +197,7 @@ function StageItem({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "overflow-hidden rounded-lg border border-slate-200 shadow-sm transition-shadow",
+        "overflow-hidden rounded-xl border border-slate-200 shadow-sm transition-shadow",
         isDragging && "opacity-60 shadow-md",
       )}
     >
@@ -267,7 +268,7 @@ function StageItem({
             <button
               type="button"
               onClick={onAddSector}
-              className="rounded-md border border-dashed border-slate-200 py-2 text-xs text-slate-400 hover:border-slate-300 hover:text-slate-600"
+              className="rounded-lg border border-dashed border-slate-200 py-2 text-xs text-slate-400 transition-colors hover:border-slate-300 hover:text-slate-600"
             >
               + Afegir sector
             </button>
