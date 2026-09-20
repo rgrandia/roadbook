@@ -155,7 +155,7 @@ export function InstructionTable({ stageId, sector }: { stageId: string; sector:
       <button
         type="button"
         onClick={() => handleAppend()}
-        className="m-3 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-slate-300 py-2 text-sm font-medium text-slate-500 hover:border-red-300 hover:text-red-600"
+        className="m-3 flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-red-300 hover:bg-red-50/50 hover:text-red-600"
       >
         <Plus className="h-4 w-4" /> Afegir instrucció
       </button>
@@ -411,7 +411,7 @@ function RowActions({
           <span className="text-lg leading-none">⋮</span>
           {hasMoreFields && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-sky-500" />}
         </summary>
-        <div className="absolute right-0 top-8 z-20 w-52 rounded-md border border-slate-200 bg-white p-1 text-xs shadow-lg">
+        <div className="absolute right-0 top-8 z-20 w-52 rounded-xl border border-slate-200/80 bg-white p-1 text-xs shadow-lg shadow-slate-900/10">
           <RowMenuButton
             icon={locked ? Unlock : Lock}
             label={locked ? "Desfixa km" : "Fixa quilometratge"}

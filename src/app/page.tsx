@@ -78,14 +78,11 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1">
-      <header className="border-b border-slate-800 bg-slate-900">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-slate-800/60 bg-slate-900/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <AppLogo size={34} />
-            <div>
-              <p className="text-sm font-semibold leading-none text-white">Rally Roadbook</p>
-              <p className="mt-1 text-xs text-slate-400">Els meus roadbooks</p>
-            </div>
+            <AppLogo size={30} />
+            <p className="text-sm font-semibold tracking-tight text-white">Rally Roadbook</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -105,7 +102,12 @@ export default function DashboardPage() {
                   className="hidden"
                   onChange={handleImportFile}
                 />
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                <Button
+                  variant="ghost"
+                  className="text-slate-300 hover:bg-white/10 hover:text-white"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={importing}
+                >
                   {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                   Importa JSON
                 </Button>
@@ -124,17 +126,28 @@ export default function DashboardPage() {
         ) : isEmpty ? (
           <Onboarding />
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {roadbooks?.map((summary) => (
-              <ProjectCard
-                key={summary.id}
-                summary={summary}
-                onDuplicate={handleDuplicate}
-                onDelete={handleDelete}
-                onExport={handleExport}
-              />
-            ))}
-          </div>
+          <>
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Els meus roadbooks</h1>
+                <p className="mt-1 text-sm text-slate-500">
+                  {roadbooks?.length} roadbook{roadbooks?.length === 1 ? "" : "s"} guardat
+                  {roadbooks?.length === 1 ? "" : "s"} en aquest navegador
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {roadbooks?.map((summary) => (
+                <ProjectCard
+                  key={summary.id}
+                  summary={summary}
+                  onDuplicate={handleDuplicate}
+                  onDelete={handleDelete}
+                  onExport={handleExport}
+                />
+              ))}
+            </div>
+          </>
         )}
       </main>
 

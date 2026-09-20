@@ -19,7 +19,7 @@ export function CategoryPicker({
         <button
           type="button"
           className={cn(
-            "flex h-9 min-w-9 items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide",
+            "flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-[11px] font-semibold uppercase tracking-wide shadow-sm transition-colors",
             def.category === "normal"
               ? "border-slate-200 bg-white text-slate-400"
               : `${def.accent} border-transparent ${def.banner ? "text-white" : "text-slate-700"}`,

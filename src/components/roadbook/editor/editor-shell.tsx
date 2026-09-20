@@ -55,10 +55,10 @@ export function EditorShell() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <TopBar onOpenSettings={() => setSettingsOpen(true)} onToggleSidebar={() => setMobileSidebarOpen((v) => !v)} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden bg-slate-100 md:gap-3 md:p-3">
         <Sidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
+        <div className="flex flex-1 flex-col overflow-hidden bg-white md:rounded-2xl md:border md:border-slate-200/80 md:shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
             <Tabs
               value={tab}
               onValueChange={(v) => {

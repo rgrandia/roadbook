@@ -36,7 +36,7 @@ export function DirectionPicker({
           <button
             type="button"
             className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+              "flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50",
               className,
             )}
             title={currentLabel}
@@ -59,7 +59,7 @@ export function DirectionPicker({
                       onClick={() => onChange(direction, undefined)}
                       title={DIRECTION_LABELS[direction]}
                       className={cn(
-                        "flex h-12 w-12 items-center justify-center rounded-md border text-slate-700 hover:bg-slate-50",
+                        "flex h-12 w-12 items-center justify-center rounded-lg border text-slate-700 transition-colors hover:bg-slate-50",
                         direction === value && !customIconId
                           ? "border-red-500 bg-red-50 text-red-600"
                           : "border-slate-200",
@@ -84,7 +84,7 @@ export function DirectionPicker({
                     onClick={() => onChange("custom", icon.id)}
                     title={icon.name}
                     className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-md border text-slate-700 hover:bg-slate-50",
+                      "flex h-12 w-12 items-center justify-center rounded-lg border text-slate-700 transition-colors hover:bg-slate-50",
                       value === "custom" && customIconId === icon.id
                         ? "border-red-500 bg-red-50 text-red-600"
                         : "border-slate-200",
@@ -97,7 +97,7 @@ export function DirectionPicker({
                   type="button"
                   onClick={() => setDesignerOpen(true)}
                   title="Crea una icona nova"
-                  className="flex h-12 w-12 items-center justify-center rounded-md border border-dashed border-slate-300 text-slate-400 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                  className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-slate-300 text-slate-400 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
                 >
                   <Plus className="h-4 w-4" />
                 </button>

@@ -55,7 +55,7 @@ export function QuickAddToolbar({ onAdd }: { onAdd: (preset: QuickAddPreset) => 
               type="button"
               onClick={() => onAdd({ direction, category: "normal" })}
               title={`Afegeix instrucció: ${DIRECTION_LABELS[direction]}`}
-              className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-50 hover:text-red-700 hover:shadow"
             >
               <DirectionIcon direction={direction} size={18} />
               {DIRECTION_LABELS[direction]}
@@ -76,7 +76,7 @@ export function QuickAddToolbar({ onAdd }: { onAdd: (preset: QuickAddPreset) => 
                 onClick={() => onAdd({ category, direction: category === "population" ? "straight" : "none" })}
                 title={`Afegeix ${def.label}`}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold shadow-sm",
+                  "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow",
                   def.banner
                     ? `${def.accent} border-transparent text-white`
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
