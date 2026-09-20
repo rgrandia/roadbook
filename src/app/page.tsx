@@ -3,10 +3,11 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Shapes, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
+import { IconDesignerDialog } from "@/components/roadbook/icon-designer-dialog";
 import { NewRoadbookDialog } from "@/components/roadbook/new-roadbook-dialog";
 import { Onboarding } from "@/components/roadbook/onboarding";
 import { ProjectCard } from "@/components/roadbook/project-card";
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [iconsOpen, setIconsOpen] = useState(false);
 
   const roadbooks = useLiveQuery(async () => {
     const all = await getDb().roadbooks.orderBy("updatedAt").reverse().toArray();
@@ -85,22 +87,32 @@ export default function DashboardPage() {
               <p className="mt-1 text-xs text-slate-400">Els meus roadbooks</p>
             </div>
           </div>
-          {!isEmpty && (
-            <div className="flex items-center gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/json"
-                className="hidden"
-                onChange={handleImportFile}
-              />
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-                {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                Importa JSON
-              </Button>
-              <NewRoadbookDialog />
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="text-slate-300 hover:bg-white/10 hover:text-white"
+              onClick={() => setIconsOpen(true)}
+            >
+              <Shapes className="h-4 w-4" />
+              Les meves icones
+            </Button>
+            {!isEmpty && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={handleImportFile}
+                />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                  {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  Importa JSON
+                </Button>
+                <NewRoadbookDialog />
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -125,6 +137,8 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      <IconDesignerDialog open={iconsOpen} onOpenChange={setIconsOpen} />
     </div>
   );
 }

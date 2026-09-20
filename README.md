@@ -16,9 +16,14 @@ instrucció), amb el quilometratge total i parcial calculant-se sol.
 - **Entrada ràpida d'instruccions**: barra d'accions amb icones grans per direccions
   i elements especials (STOP, REAGRUPAMENT, CONTROL, SORTIDA, META, PERILL, pas
   per població, informació, nota).
-- **Diagrames de direcció ("tulips")**: ~27 pictogrames que dibuixen la geometria
-  real de la cruïlla (gir, cruïlla en T, encreuament, rotonda amb la sortida 1a-5a,
-  desviament, autopista/autovia), no fletxes girades — igual que un roadbook imprès.
+- **Diagrames de direcció ("tulips")**: ~45 pictogrames que dibuixen la geometria
+  real de la cruïlla (gir, cruïlla en T, encreuament, rotonda amb la sortida 1a-6a,
+  desviament, autopista/autovia, revolt en S), no fletxes girades — igual que un
+  roadbook imprès.
+- **Icones personalitzades**: un editor paramètric ("Les meves icones", des del
+  tauler o des del mateix selector de direcció) per dissenyar nous pictogrames
+  amb el mateix estil (angle del camí pres + sortides no preses opcionals +
+  rotonda), guardats en aquest navegador i disponibles a tots els roadbooks.
 - **Càlcul automàtic de quilometratge**: "km total", "km parcial" (es reinicia
   després de STOP/REAGRUPAMENT/CONTROL/SORTIDA) i "km regressiu" (compte enrere
   fins al final del sector) es calculen sols a partir de la distància introduïda
@@ -190,11 +195,22 @@ simplement pinten aquestes dades amb primitives diferents.
 Cada pictograma és un diagrama esquemàtic (línia gruixuda pel camí seguit,
 línies primes per les altres sortides d'una cruïlla, cercle per a les
 rotondes), no una fletxa girada — seguint la convenció real dels roadbooks
-impresos. El fitxer construeix aquest conjunt fix de ~27 icones amb petites
+impresos. El fitxer construeix el conjunt fix de ~45 icones amb petites
 funcions geomètriques (`polar`, `arrowHead`, `mirrorGlyph`...) en lloc de
-coordenades escrites a mà una per una, però el resultat exportat és una taula
-estàtica: no hi ha cap editor de geometria a mans de l'usuari (es va descartar
-deliberadament per mantenir l'abast del MVP raonable).
+coordenades escrites a mà una per una.
+
+Aquestes mateixes funcions (`turn`, `junction`, `roundabout`) alimenten
+`buildCustomGlyph`, que l'editor "Icones personalitzades"
+(`icon-designer-dialog.tsx`) fa servir per generar icones d'usuari a partir
+de només tres paràmetres (angle del camí pres, fins a 3 sortides no preses,
+si és rotonda) — per això una icona creada a l'editor és visualment
+indistingible de les del conjunt fix. Direction és un enum tancat
+(`DirectionType`); les icones d'usuari hi entren com un únic valor especial
+`"custom"` combinat amb `Instruction.customIconId`, que es resol contra la
+llibreria guardada a `db.ts` (`resolveDirectionGlyph`) tant a l'editor com al
+PDF. L'abast és deliberadament limitat a girs/cruïlles/rotondes — les formes
+especials (autopista de dos carrils, revolt en S, tancada) segueixen sent
+exclusives del conjunt fix, no paramètriques.
 
 ### Previsualització = PDF, no una aproximació
 
@@ -225,9 +241,15 @@ viuen les dades.
 - La importació de CSV/Excel/GPX/KML no està implementada al MVP, però el
   model de dades (`src/lib/roadbook/types.ts`) està pensat perquè afegir-ho
   només calgui escriure un parser cap a `Instruction[]`.
-- Els diagrames de direcció són un conjunt fix de ~27 pictogrames (no un editor
-  de geometria de cruïlles): cobreixen els casos habituals però no permeten
-  dibuixar una cruïlla arbitrària instrucció per instrucció.
+- L'editor d'icones personalitzades només cobreix girs/cruïlles/rotondes
+  paramètriques (angle + fins a 3 sortides + rotonda); no permet dissenyar
+  formes especials (carril d'autopista, revolt en S, ganxo tancat) ni dibuix
+  lliure de corbes.
+- La llibreria d'icones personalitzades és local a aquest navegador (mateix
+  model "local-first" que la resta de l'app): no es sincronitza entre
+  dispositius ni es versiona amb el roadbook JSON exportat, així que
+  reobrir un roadbook exportat en un altre navegador mostrarà les icones
+  personalitzades com a buides si l'icona referenciada no s'hi ha creat.
 
 ## Tests
 
@@ -238,7 +260,13 @@ npm run test
 - `src/lib/roadbook/calc.test.ts` — motor de càlcul de quilometratge, incloent
   el km regressiu (19 tests).
 - `src/lib/roadbook/validation.test.ts` — avisos de validació (6 tests).
+- `src/lib/roadbook/direction-icons.test.ts` — geometria paramètrica de les
+  icones personalitzades (`buildCustomGlyph`) i la resolució direcció/icona
+  personalitzada (`resolveDirectionGlyph`), incloent el cas d'una icona
+  esborrada (7 tests).
 - `src/lib/db.test.ts` — persistència a IndexedDB amb `fake-indexeddb` (4 tests).
 - `src/lib/pdf/roadbook-document.test.tsx` — el document PDF es genera sense
-  errors amb totes les categories, els ~27 pictogrames de direcció, seccions
-  d'enllaç, amb i sense etapes, en vertical i horitzontal (5 tests).
+  errors amb totes les categories, els ~45 pictogrames de direcció, una icona
+  personalitzada (incloent una referència trencada), la paginació a 4 passos
+  per pàgina, seccions d'enllaç, amb i sense etapes, en vertical i horitzontal
+  (9 tests).

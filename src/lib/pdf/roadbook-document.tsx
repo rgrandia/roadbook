@@ -1,6 +1,7 @@
 import { Document, Image, Page, Path, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 import { CATEGORY_MAP } from "@/lib/roadbook/library";
-import type { Instruction, Roadbook, Sector, Stage } from "@/lib/roadbook/types";
+import type { CustomDirectionIcon, Instruction, Roadbook, Sector, Stage } from "@/lib/roadbook/types";
+import { resolveDirectionGlyph } from "@/lib/roadbook/direction-icons";
 import {
   formatKm,
   formatMinutes,
@@ -293,10 +294,12 @@ function InstructionRow({
   instruction,
   index,
   regressive,
+  customIcons,
 }: {
   instruction: Instruction;
   index: number;
   regressive: number;
+  customIcons: CustomDirectionIcon[];
 }) {
   const roadLabel = [instruction.road.number, instruction.road.name].filter(Boolean).join(" ");
 
@@ -306,7 +309,11 @@ function InstructionRow({
         <Text style={styles.tabNumber}>{instruction.order}</Text>
       </View>
       <View style={[styles.cellBase, styles.colDir, styles.vDivider]}>
-        <DirectionIconPdf direction={instruction.direction} size={52} />
+        <DirectionIconPdf
+          direction={instruction.direction}
+          glyph={resolveDirectionGlyph(instruction.direction, instruction.customIconId, customIcons)}
+          size={52}
+        />
       </View>
       <View style={[styles.cellBase, styles.colDist, styles.vDivider]}>
         <Text style={[styles.distValue, styles.cellRight]}>{formatKm(instruction.distance)}</Text>
@@ -419,7 +426,15 @@ function SectorContext({ stage, sector, roadbook }: { stage: Stage; sector: Sect
   );
 }
 
-function PrintPage({ plan, roadbook }: { plan: PrintPagePlan; roadbook: Roadbook }) {
+function PrintPage({
+  plan,
+  roadbook,
+  customIcons,
+}: {
+  plan: PrintPagePlan;
+  roadbook: Roadbook;
+  customIcons: CustomDirectionIcon[];
+}) {
   const { sector } = plan;
   return (
     <Page size="A4" orientation={roadbook.settings.orientation} style={styles.page}>
@@ -443,6 +458,7 @@ function PrintPage({ plan, roadbook }: { plan: PrintPagePlan; roadbook: Roadbook
                   instruction={instruction}
                   index={i}
                   regressive={instructionKmRegressive(sector, instruction)}
+                  customIcons={customIcons}
                 />
               );
             })
@@ -459,7 +475,14 @@ function PrintPage({ plan, roadbook }: { plan: PrintPagePlan; roadbook: Roadbook
   );
 }
 
-export function RoadbookPdfDocument({ roadbook }: { roadbook: Roadbook }) {
+export function RoadbookPdfDocument({
+  roadbook,
+  customIcons = [],
+}: {
+  roadbook: Roadbook;
+  /** The user's saved custom icon library, needed to render instructions with direction "custom". */
+  customIcons?: CustomDirectionIcon[];
+}) {
   const pages = roadbook.stages.length === 0 ? [] : buildPrintPages(roadbook);
 
   return (
@@ -471,7 +494,12 @@ export function RoadbookPdfDocument({ roadbook }: { roadbook: Roadbook }) {
         </Page>
       ) : (
         pages.map((plan, i) => (
-          <PrintPage key={`${plan.stage.id}-${plan.sector?.id ?? "empty"}-${i}`} plan={plan} roadbook={roadbook} />
+          <PrintPage
+            key={`${plan.stage.id}-${plan.sector?.id ?? "empty"}-${i}`}
+            plan={plan}
+            roadbook={roadbook}
+            customIcons={customIcons}
+          />
         ))
       )}
     </Document>

@@ -231,7 +231,11 @@ function InstructionRow({
 
       <CategoryPicker value={instruction.category} onChange={(category) => onChange({ category })} />
 
-      <DirectionPicker value={instruction.direction} onChange={(direction) => onChange({ direction })} />
+      <DirectionPicker
+        value={instruction.direction}
+        customIconId={instruction.customIconId}
+        onChange={(direction, customIconId) => onChange({ direction, customIconId })}
+      />
 
       <Input
         ref={registerRef}

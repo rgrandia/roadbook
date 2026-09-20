@@ -100,6 +100,32 @@ describe("RoadbookPdfDocument", () => {
     expect(bytes.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   });
 
+  it("renders a custom icon (and a dangling customIconId) without throwing", async () => {
+    const roadbook = createRoadbook("Custom icon");
+    const stage = createStage({}, 1);
+    const sector = recalcSector(
+      createSector({
+        instructions: [
+          createInstruction({ distance: 1, direction: "custom", customIconId: "known" }),
+          createInstruction({ distance: 1, direction: "custom", customIconId: "missing" }),
+        ],
+      }),
+    );
+    stage.sectors = [sector];
+    roadbook.stages = [stage];
+
+    const customIcons = [
+      { id: "known", name: "Gir estrany", takenAngle: 100, otherAngles: [-40], roundabout: false, createdAt: "2024-01-01" },
+    ];
+
+    const buffer = await pdf(<RoadbookPdfDocument roadbook={roadbook} customIcons={customIcons} />).toBuffer();
+    const chunks: Buffer[] = [];
+    for await (const chunk of buffer) chunks.push(chunk as Buffer);
+    const bytes = Buffer.concat(chunks);
+    expect(bytes.length).toBeGreaterThan(0);
+    expect(bytes.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
+
   it("renders a liaison sector's transition bar without throwing", async () => {
     const roadbook = createRoadbook("Liaison");
     const stage = createStage({}, 1);

@@ -1,4 +1,4 @@
-import type { DirectionType } from "./types";
+import type { CustomDirectionIcon, DirectionType } from "./types";
 
 /**
  * Direction pictograms ("tulip diagrams") as raw SVG path data in a 24x24
@@ -100,7 +100,7 @@ function mirrorGlyph(g: DirectionGlyph): DirectionGlyph {
 // bend up through a normal 90 degree turn; only the hairpin needs a sharper,
 // hand-tuned hook shape (a single quadratic pinches when start/end get close). ----
 
-function turn(angleDeg: number, radius = 9.5): DirectionGlyph {
+export function turn(angleDeg: number, radius = 9.5): DirectionGlyph {
   const exit = polar(CENTER, radius, angleDeg);
   return { bold: [curve(ENTRY, [12, 12], exit), arrowHead(exit, angleDeg)], dot: DOT };
 }
@@ -117,7 +117,7 @@ const TURN_HAIRPIN_RIGHT: DirectionGlyph = {
 };
 
 /** T-junction / crossroads: bold entry + turn, thin stub(s) for the untaken arm(s). Right side; mirror for left. */
-function junction(takenAngle: number, otherAngles: number[]): DirectionGlyph {
+export function junction(takenAngle: number, otherAngles: number[]): DirectionGlyph {
   const bend: Point = [12, 13];
   const exit = polar(CENTER, 8.5, takenAngle);
   return {
@@ -128,7 +128,7 @@ function junction(takenAngle: number, otherAngles: number[]): DirectionGlyph {
 }
 
 /** Roundabout: a bold turn (same recipe as the simple turns) with a circle drawn behind it. */
-function roundabout(exitAngle: number): DirectionGlyph {
+export function roundabout(exitAngle: number): DirectionGlyph {
   const r = 4.5;
   const exit = polar(CENTER, 10, exitAngle);
   return {
@@ -268,7 +268,35 @@ export const DIRECTION_GLYPHS: Record<DirectionType, DirectionGlyph> = {
 
   "u-turn": { bold: [HOOK_U_TURN], dot: DOT },
   none: { bold: [] },
+  /** Never rendered directly - see buildCustomGlyph/resolveDirectionGlyph below. */
+  custom: { bold: [] },
 };
+
+/**
+ * Builds a glyph for a user-designed icon (see CustomDirectionIcon), reusing
+ * the same `turn`/`junction`/`roundabout` generators as the built-in set so
+ * custom icons stay visually consistent with the rest of the roadbook.
+ */
+export function buildCustomGlyph(spec: Pick<CustomDirectionIcon, "takenAngle" | "otherAngles" | "roundabout">): DirectionGlyph {
+  if (spec.roundabout) return roundabout(spec.takenAngle);
+  if (spec.otherAngles.length === 0) return turn(spec.takenAngle);
+  return junction(spec.takenAngle, spec.otherAngles);
+}
+
+/**
+ * Resolves whichever glyph an instruction should show: the built-in table
+ * for a normal DirectionType, or a custom icon looked up by id. Falls back
+ * to an empty glyph if the referenced custom icon was deleted.
+ */
+export function resolveDirectionGlyph(
+  direction: DirectionType,
+  customIconId: string | undefined,
+  customIcons: CustomDirectionIcon[],
+): DirectionGlyph {
+  if (direction !== "custom") return DIRECTION_GLYPHS[direction];
+  const spec = customIcons.find((icon) => icon.id === customIconId);
+  return spec ? buildCustomGlyph(spec) : { bold: [] };
+}
 
 export const DIRECTION_LABELS: Record<DirectionType, string> = {
   straight: "Seguir recte",
@@ -316,6 +344,7 @@ export const DIRECTION_LABELS: Record<DirectionType, string> = {
   "s-bend-right-left": "Revolt en S, dreta-esquerra",
   "u-turn": "Mitja volta",
   none: "Sense direcció",
+  custom: "Icona personalitzada",
 };
 
 /** Grouped for the direction picker popover (spec section 7/16). */

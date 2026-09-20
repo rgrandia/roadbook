@@ -1,9 +1,12 @@
 import { cn } from "@/lib/utils";
-import { DIRECTION_GLYPHS, DIRECTION_LABELS } from "@/lib/roadbook/direction-icons";
+import { DIRECTION_GLYPHS, DIRECTION_LABELS, type DirectionGlyph } from "@/lib/roadbook/direction-icons";
 import type { DirectionType } from "@/lib/roadbook/types";
 
 interface DirectionIconProps {
   direction: DirectionType;
+  /** Precomputed glyph to render instead of the built-in table lookup (custom icons, live designer preview). */
+  glyph?: DirectionGlyph;
+  label?: string;
   className?: string;
   size?: number;
 }
@@ -14,8 +17,8 @@ interface DirectionIconProps {
  * component, so the exact same `d` strings can be reused verbatim by the PDF
  * renderer.
  */
-export function DirectionIcon({ direction, className, size = 22 }: DirectionIconProps) {
-  const glyph = DIRECTION_GLYPHS[direction];
+export function DirectionIcon({ direction, glyph: glyphOverride, label, className, size = 22 }: DirectionIconProps) {
+  const glyph = glyphOverride ?? DIRECTION_GLYPHS[direction];
   if (!glyph || glyph.bold.length === 0) {
     return <div className={cn("inline-block", className)} style={{ width: size, height: size }} aria-hidden />;
   }
@@ -31,7 +34,7 @@ export function DirectionIcon({ direction, className, size = 22 }: DirectionIcon
       strokeLinejoin="round"
       className={cn("inline-block", className)}
       role="img"
-      aria-label={DIRECTION_LABELS[direction]}
+      aria-label={label ?? DIRECTION_LABELS[direction]}
     >
       {glyph.circle ? <circle cx={glyph.circle[0]} cy={glyph.circle[1]} r={glyph.circle[2]} strokeWidth={1} /> : null}
       {glyph.thin?.map((d, i) => (

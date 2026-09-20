@@ -1,4 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
+import { getDb } from "@/lib/db";
 import type { Roadbook } from "@/lib/roadbook/types";
 import { RoadbookPdfDocument } from "./roadbook-document";
 
@@ -14,7 +15,8 @@ function slugify(value: string): string {
 }
 
 export async function downloadRoadbookPdf(roadbook: Roadbook): Promise<void> {
-  const blob = await pdf(<RoadbookPdfDocument roadbook={roadbook} />).toBlob();
+  const customIcons = await getDb().customIcons.toArray();
+  const blob = await pdf(<RoadbookPdfDocument roadbook={roadbook} customIcons={customIcons} />).toBlob();
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
