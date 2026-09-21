@@ -1,7 +1,7 @@
-import { deleteRoadbookById, listRoadbooks, saveRoadbook } from "./db";
+import { deleteRoadbookById, getDb, listRoadbooks, saveRoadbook } from "./db";
 import { recalcRoadbook, roadbookSectorCount, roadbookTotalDistance } from "./roadbook/calc";
 import { createId, createStarterRoadbook } from "./roadbook/factory";
-import type { Roadbook, RoadbookSummary } from "./roadbook/types";
+import type { CustomDirectionIcon, Roadbook, RoadbookSummary } from "./roadbook/types";
 
 export function toSummary(roadbook: Roadbook): RoadbookSummary {
   return {
@@ -55,8 +55,40 @@ export async function deleteProject(id: string): Promise<void> {
   await deleteRoadbookById(id);
 }
 
-export function exportProjectToJson(roadbook: Roadbook): void {
-  const blob = new Blob([JSON.stringify(roadbook, null, 2)], { type: "application/json" });
+/** Shape written by exportProjectToJson - a roadbook plus the custom icons it actually uses, so sharing the file shares the icons too. */
+export interface RoadbookExportFile {
+  roadbook: Roadbook;
+  customIcons: CustomDirectionIcon[];
+}
+
+function collectUsedCustomIconIds(roadbook: Roadbook): string[] {
+  const ids = new Set<string>();
+  for (const stage of roadbook.stages) {
+    for (const sector of stage.sectors) {
+      for (const instruction of sector.instructions) {
+        if (instruction.direction === "custom" && instruction.customIconId) {
+          ids.add(instruction.customIconId);
+        }
+      }
+    }
+  }
+  return [...ids];
+}
+
+/** Builds the export payload for a roadbook: itself plus whichever custom icons it actually uses. Pure data - no DOM/download side effects, so it's easy to unit test. */
+export async function buildRoadbookExportFile(roadbook: Roadbook): Promise<RoadbookExportFile> {
+  const usedIds = collectUsedCustomIconIds(roadbook);
+  const found = usedIds.length ? await getDb().customIcons.bulkGet(usedIds) : [];
+  return {
+    roadbook,
+    customIcons: found.filter((icon): icon is CustomDirectionIcon => icon !== undefined),
+  };
+}
+
+/** Exports a roadbook as JSON, bundling any custom direction icons it uses so the file is self-contained on another device. */
+export async function exportProjectToJson(roadbook: Roadbook): Promise<void> {
+  const file = await buildRoadbookExportFile(roadbook);
+  const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -69,7 +101,13 @@ export function exportProjectToJson(roadbook: Roadbook): void {
 
 export class InvalidRoadbookFileError extends Error {}
 
-/** Parses + minimally validates a roadbook JSON file, assigning a fresh id. */
+/**
+ * Parses + minimally validates a roadbook JSON file, assigning a fresh id.
+ * Accepts both the current `{ roadbook, customIcons }` export shape and a
+ * plain roadbook object (files exported before custom icons existed, or by
+ * older code), merging any bundled custom icons into the local library
+ * (skipping ones that already exist here, so re-importing is idempotent).
+ */
 export async function importProjectFromJson(file: File): Promise<Roadbook> {
   const text = await file.text();
   let parsed: unknown;
@@ -78,12 +116,29 @@ export async function importProjectFromJson(file: File): Promise<Roadbook> {
   } catch {
     throw new InvalidRoadbookFileError("El fitxer no és un JSON vàlid.");
   }
-  if (!isRoadbookLike(parsed)) {
+
+  let roadbookLike: unknown = parsed;
+  let bundledIcons: CustomDirectionIcon[] = [];
+  if (parsed && typeof parsed === "object" && "roadbook" in (parsed as Record<string, unknown>)) {
+    const wrapper = parsed as { roadbook: unknown; customIcons?: unknown };
+    roadbookLike = wrapper.roadbook;
+    if (Array.isArray(wrapper.customIcons)) bundledIcons = wrapper.customIcons as CustomDirectionIcon[];
+  }
+
+  if (!isRoadbookLike(roadbookLike)) {
     throw new InvalidRoadbookFileError("El fitxer no té l'estructura d'un roadbook.");
   }
+
+  if (bundledIcons.length > 0) {
+    const db = getDb();
+    const existingIds = new Set((await db.customIcons.toCollection().primaryKeys()) as string[]);
+    const toAdd = bundledIcons.filter((icon) => icon && typeof icon.id === "string" && !existingIds.has(icon.id));
+    if (toAdd.length > 0) await db.customIcons.bulkPut(toAdd);
+  }
+
   const now = new Date().toISOString();
   const roadbook: Roadbook = recalcRoadbook({
-    ...parsed,
+    ...roadbookLike,
     id: createId(),
     createdAt: now,
     updatedAt: now,

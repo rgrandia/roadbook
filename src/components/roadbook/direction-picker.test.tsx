@@ -24,9 +24,7 @@ describe("DirectionPicker", () => {
     const icon: CustomDirectionIcon = {
       id: "custom-1",
       name: "Gir estrany",
-      takenAngle: 100,
-      otherAngles: [],
-      roundabout: false,
+      template: { kind: "turn", angle: 100, otherAngles: [] },
       createdAt: new Date().toISOString(),
     };
     await getDb().customIcons.put(icon);
@@ -39,6 +37,30 @@ describe("DirectionPicker", () => {
     fireEvent.click(customOption);
 
     expect(onChange).toHaveBeenCalledWith("custom", "custom-1");
+  });
+
+  it("filters both built-in and custom icons as the user types a search query", async () => {
+    const icon: CustomDirectionIcon = {
+      id: "custom-1",
+      name: "Gir estrany",
+      template: { kind: "turn", angle: 100, otherAngles: [] },
+      createdAt: new Date().toISOString(),
+    };
+    await getDb().customIcons.put(icon);
+
+    render(<DirectionPicker value="straight" onChange={vi.fn()} />);
+    fireEvent.click(screen.getByTitle("Seguir recte"));
+    await screen.findByTitle("Dreta");
+
+    fireEvent.change(screen.getByPlaceholderText("Cerca una icona..."), { target: { value: "rotonda" } });
+
+    expect(screen.queryByTitle("Dreta")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Gir estrany")).not.toBeInTheDocument();
+    expect(screen.getByTitle("Rotonda, 2a sortida")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Cerca una icona..."), { target: { value: "estrany" } });
+    expect(screen.getByTitle("Gir estrany")).toBeInTheDocument();
+    expect(screen.queryByTitle("Rotonda, 2a sortida")).not.toBeInTheDocument();
   });
 
   it("opens the icon designer from the '+' tile", async () => {

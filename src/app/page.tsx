@@ -49,7 +49,7 @@ export default function DashboardPage() {
   async function handleExport(summary: RoadbookSummary) {
     const full = await getDb().roadbooks.get(summary.id);
     if (!full) return;
-    exportProjectToJson(full);
+    await exportProjectToJson(full);
   }
 
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
