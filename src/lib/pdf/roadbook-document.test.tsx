@@ -115,7 +115,12 @@ describe("RoadbookPdfDocument", () => {
     roadbook.stages = [stage];
 
     const customIcons = [
-      { id: "known", name: "Gir estrany", takenAngle: 100, otherAngles: [-40], roundabout: false, createdAt: "2024-01-01" },
+      {
+        id: "known",
+        name: "Gir estrany",
+        template: { kind: "turn" as const, angle: 100, otherAngles: [-40] },
+        createdAt: "2024-01-01",
+      },
     ];
 
     const buffer = await pdf(<RoadbookPdfDocument roadbook={roadbook} customIcons={customIcons} />).toBuffer();

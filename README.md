@@ -22,8 +22,17 @@ instrucció), amb el quilometratge total i parcial calculant-se sol.
   roadbook imprès.
 - **Icones personalitzades**: un editor paramètric ("Les meves icones", des del
   tauler o des del mateix selector de direcció) per dissenyar nous pictogrames
-  amb el mateix estil (angle del camí pres + sortides no preses opcionals +
-  rotonda), guardats en aquest navegador i disponibles a tots els roadbooks.
+  amb el mateix estil, cobrint totes les famílies de forma del conjunt fix
+  (gir/cruïlla amb sortides no preses, rotonda, desviament, autopista —
+  mantenir carril / sortida / bifurcació —, revolt en S), amb un botó de
+  "Mirall" per generar la parella esquerra/dreta sense tornar a introduir
+  l'angle. Es guarden en aquest navegador i estan disponibles a tots els
+  roadbooks, i viatgen amb el fitxer JSON quan exportes un roadbook que les
+  faci servir (es fusionen a la llibreria local en importar-lo, sense
+  duplicar-les si ja hi eren).
+- **Cercador d'icones**: el selector de direcció (45 icones fixes + les
+  personalitzades) es pot filtrar escrivint, perquè trobar-ne una no depengui
+  de fer scroll per totes les categories.
 - **Càlcul automàtic de quilometratge**: "km total", "km parcial" (es reinicia
   després de STOP/REAGRUPAMENT/CONTROL/SORTIDA) i "km regressiu" (compte enrere
   fins al final del sector) es calculen sols a partir de la distància introduïda
@@ -199,18 +208,22 @@ impresos. El fitxer construeix el conjunt fix de ~45 icones amb petites
 funcions geomètriques (`polar`, `arrowHead`, `mirrorGlyph`...) en lloc de
 coordenades escrites a mà una per una.
 
-Aquestes mateixes funcions (`turn`, `junction`, `roundabout`) alimenten
+Aquestes mateixes funcions (`turn`/`junction`, `roundabout`, `fork`,
+`motorwayKeep`/`motorwayExit`/`motorwayFork`, `sBend`) alimenten
 `buildCustomGlyph`, que l'editor "Icones personalitzades"
-(`icon-designer-dialog.tsx`) fa servir per generar icones d'usuari a partir
-de només tres paràmetres (angle del camí pres, fins a 3 sortides no preses,
-si és rotonda) — per això una icona creada a l'editor és visualment
-indistingible de les del conjunt fix. Direction és un enum tancat
-(`DirectionType`); les icones d'usuari hi entren com un únic valor especial
-`"custom"` combinat amb `Instruction.customIconId`, que es resol contra la
-llibreria guardada a `db.ts` (`resolveDirectionGlyph`) tant a l'editor com al
-PDF. L'abast és deliberadament limitat a girs/cruïlles/rotondes — les formes
-especials (autopista de dos carrils, revolt en S, tancada) segueixen sent
-exclusives del conjunt fix, no paramètriques.
+(`icon-designer-dialog.tsx`) fa servir per generar icones d'usuari — per
+això una icona creada a l'editor és visualment indistingible de les del
+conjunt fix. Cada icona d'usuari (`CustomDirectionIcon`) guarda un
+`CustomIconTemplate`: una unió discriminada per `kind` (`turn` amb angle +
+fins a 3 sortides no preses, `roundabout`/`fork`/`motorway-*` amb un sol
+angle, `s-bend` amb el sentit del primer revolt), així que l'editor pot
+mostrar només els controls que pertoquen a cada forma. Direction és un enum
+tancat (`DirectionType`); les icones d'usuari hi entren com un únic valor
+especial `"custom"` combinat amb `Instruction.customIconId`, que es resol
+contra la llibreria guardada a `db.ts` (`resolveDirectionGlyph`) tant a
+l'editor com al PDF. Encara queden fora del paramètric els casos hand-tuned
+d'un sol ús (ganxo de tancada, incorporació d'autopista, mitja volta), que
+segueixen sent exclusius del conjunt fix.
 
 ### Previsualització = PDF, no una aproximació
 
@@ -241,15 +254,18 @@ viuen les dades.
 - La importació de CSV/Excel/GPX/KML no està implementada al MVP, però el
   model de dades (`src/lib/roadbook/types.ts`) està pensat perquè afegir-ho
   només calgui escriure un parser cap a `Instruction[]`.
-- L'editor d'icones personalitzades només cobreix girs/cruïlles/rotondes
-  paramètriques (angle + fins a 3 sortides + rotonda); no permet dissenyar
-  formes especials (carril d'autopista, revolt en S, ganxo tancat) ni dibuix
-  lliure de corbes.
+- L'editor d'icones personalitzades cobreix totes les famílies paramètriques
+  (gir/cruïlla, rotonda, desviament, autopista, revolt en S) però no els
+  ganxos fets a mà d'un sol ús (tancada, incorporació, mitja volta) ni dibuix
+  lliure de corbes arbitràries.
 - La llibreria d'icones personalitzades és local a aquest navegador (mateix
-  model "local-first" que la resta de l'app): no es sincronitza entre
-  dispositius ni es versiona amb el roadbook JSON exportat, així que
-  reobrir un roadbook exportat en un altre navegador mostrarà les icones
-  personalitzades com a buides si l'icona referenciada no s'hi ha creat.
+  model "local-first" que la resta de l'app): no hi ha sincronització
+  automàtica entre dispositius. Ara sí que **viatgen amb l'exportació JSON**
+  d'un roadbook que les faci servir (es fusionen a la llibreria local en
+  importar, sense sobreescriure una icona local amb el mateix id) — però si
+  vols la llibreria sencera en un altre navegador sense passar per un
+  roadbook que ja la faci servir, encara l'has d'exportar/importar tram per
+  tram; no hi ha un "exporta tota la llibreria" independent.
 
 ## Tests
 
@@ -260,13 +276,22 @@ npm run test
 - `src/lib/roadbook/calc.test.ts` — motor de càlcul de quilometratge, incloent
   el km regressiu (19 tests).
 - `src/lib/roadbook/validation.test.ts` — avisos de validació (6 tests).
-- `src/lib/roadbook/direction-icons.test.ts` — geometria paramètrica de les
-  icones personalitzades (`buildCustomGlyph`) i la resolució direcció/icona
-  personalitzada (`resolveDirectionGlyph`), incloent el cas d'una icona
-  esborrada (7 tests).
+- `src/lib/roadbook/direction-icons.test.ts` — geometria paramètrica de totes
+  les famílies de forma de les icones personalitzades (`buildCustomGlyph`:
+  gir/cruïlla, rotonda, desviament, autopista, revolt en S) i la resolució
+  direcció/icona personalitzada (`resolveDirectionGlyph`), incloent el cas
+  d'una icona esborrada (12 tests).
 - `src/lib/db.test.ts` — persistència a IndexedDB amb `fake-indexeddb` (4 tests).
+- `src/lib/projects.test.ts` — l'exportació JSON només empaqueta les icones
+  personalitzades que el roadbook fa servir de debò, i la importació les
+  fusiona a la llibreria local sense sobreescriure-les ni duplicar-les,
+  mantenint compatibilitat amb fitxers antics sense aquest embolcall (5 tests).
 - `src/lib/pdf/roadbook-document.test.tsx` — el document PDF es genera sense
   errors amb totes les categories, els ~45 pictogrames de direcció, una icona
   personalitzada (incloent una referència trencada), la paginació a 4 passos
   per pàgina, seccions d'enllaç, amb i sense etapes, en vertical i horitzontal
   (9 tests).
+- `src/components/roadbook/*.test.tsx` — tests de component (Vitest +
+  Testing Library) per `ProjectCard`, `Onboarding`, `DirectionPicker`
+  (incloent el cercador nou) i `IconDesignerDialog` (incloent el teclat del
+  compàs i el botó de mirall) (14 tests).

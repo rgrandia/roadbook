@@ -1,4 +1,4 @@
-import type { CustomDirectionIcon, DirectionType } from "./types";
+import type { CustomDirectionIcon, CustomIconTemplate, DirectionType } from "./types";
 
 /**
  * Direction pictograms ("tulip diagrams") as raw SVG path data in a 24x24
@@ -139,7 +139,7 @@ export function roundabout(exitAngle: number): DirectionGlyph {
 }
 
 /** Gentle Y-shaped fork: bold on the branch kept, thin on the other. `keepAngle` right-side; mirror for left. */
-function fork(keepAngle: number): DirectionGlyph {
+export function fork(keepAngle: number): DirectionGlyph {
   const bend: Point = [12, 15];
   const exit = polar(CENTER, 10, keepAngle);
   const otherExit = polar(CENTER, 9, keepAngle > 0 ? keepAngle - 70 : keepAngle + 70);
@@ -155,7 +155,7 @@ const FORK_SLIGHT_RIGHT = fork(20);
 const FORK_SHARP_RIGHT = fork(55);
 
 /** Multi-lane motorway pictograms: a bold lane at `angleDeg` plus a thin parallel lane. Right side; mirror for left. */
-function motorwayKeep(angleDeg: number): DirectionGlyph {
+export function motorwayKeep(angleDeg: number): DirectionGlyph {
   const sign = angleDeg >= 0 ? 1 : -1;
   const exit = polar(CENTER, 9.5, angleDeg);
   return {
@@ -165,7 +165,7 @@ function motorwayKeep(angleDeg: number): DirectionGlyph {
   };
 }
 
-function motorwayExit(angleDeg: number): DirectionGlyph {
+export function motorwayExit(angleDeg: number): DirectionGlyph {
   const exit = polar(CENTER, 10, angleDeg);
   return {
     bold: [curve(ENTRY, [12, 14], exit), arrowHead(exit, angleDeg)],
@@ -174,7 +174,7 @@ function motorwayExit(angleDeg: number): DirectionGlyph {
   };
 }
 
-function motorwayFork(angleDeg: number): DirectionGlyph {
+export function motorwayFork(angleDeg: number): DirectionGlyph {
   const sign = angleDeg >= 0 ? 1 : -1;
   const exit = polar(CENTER, 10, angleDeg);
   const otherExit = polar(CENTER, 9, -angleDeg * 0.4);
@@ -197,7 +197,7 @@ const MOTORWAY_MERGE_RIGHT: DirectionGlyph = {
 };
 
 /** S-bend: curves one way then the other, ending roughly back on the original heading. */
-function sBend(firstSign: 1 | -1): DirectionGlyph {
+export function sBend(firstSign: 1 | -1): DirectionGlyph {
   const end = polar(CENTER, 9, firstSign * -20);
   return {
     bold: [
@@ -273,14 +273,28 @@ export const DIRECTION_GLYPHS: Record<DirectionType, DirectionGlyph> = {
 };
 
 /**
- * Builds a glyph for a user-designed icon (see CustomDirectionIcon), reusing
- * the same `turn`/`junction`/`roundabout` generators as the built-in set so
- * custom icons stay visually consistent with the rest of the roadbook.
+ * Builds a glyph for a user-designed icon (see CustomDirectionIcon/
+ * CustomIconTemplate), reusing the same generator functions as the
+ * built-in set so custom icons stay visually consistent with the rest of
+ * the roadbook, whichever shape family they're built from.
  */
-export function buildCustomGlyph(spec: Pick<CustomDirectionIcon, "takenAngle" | "otherAngles" | "roundabout">): DirectionGlyph {
-  if (spec.roundabout) return roundabout(spec.takenAngle);
-  if (spec.otherAngles.length === 0) return turn(spec.takenAngle);
-  return junction(spec.takenAngle, spec.otherAngles);
+export function buildCustomGlyph(template: CustomIconTemplate): DirectionGlyph {
+  switch (template.kind) {
+    case "turn":
+      return template.otherAngles.length === 0 ? turn(template.angle) : junction(template.angle, template.otherAngles);
+    case "roundabout":
+      return roundabout(template.angle);
+    case "fork":
+      return fork(template.angle);
+    case "motorway-keep":
+      return motorwayKeep(template.angle);
+    case "motorway-exit":
+      return motorwayExit(template.angle);
+    case "motorway-fork":
+      return motorwayFork(template.angle);
+    case "s-bend":
+      return sBend(template.firstSign);
+  }
 }
 
 /**
@@ -295,7 +309,7 @@ export function resolveDirectionGlyph(
 ): DirectionGlyph {
   if (direction !== "custom") return DIRECTION_GLYPHS[direction];
   const spec = customIcons.find((icon) => icon.id === customIconId);
-  return spec ? buildCustomGlyph(spec) : { bold: [] };
+  return spec ? buildCustomGlyph(spec.template) : { bold: [] };
 }
 
 export const DIRECTION_LABELS: Record<DirectionType, string> = {

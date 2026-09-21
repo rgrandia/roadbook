@@ -208,21 +208,37 @@ export const DEFAULT_SETTINGS: RoadbookSettings = {
 };
 
 /**
+ * The parametric shape family a custom icon is built from - the same
+ * generator functions that produce the built-in ~45 pictograms (see
+ * buildCustomGlyph in direction-icons.ts). `angle` follows the same
+ * convention throughout: 0 = straight ahead, positive = clockwise/right.
+ * `turn` is also used for plain T-junctions/crossroads via `otherAngles`
+ * (thin untaken-arm stubs); pass an empty array for a simple turn.
+ *
+ * Deliberately not covered: the hand-tuned one-off shapes (hairpin hook,
+ * motorway merge, U-turn) - those stay exclusive to the built-in set.
+ */
+export type CustomIconTemplate =
+  | { kind: "turn"; angle: number; otherAngles: number[] }
+  | { kind: "roundabout"; angle: number }
+  | { kind: "fork"; angle: number }
+  | { kind: "motorway-keep"; angle: number }
+  | { kind: "motorway-exit"; angle: number }
+  | { kind: "motorway-fork"; angle: number }
+  | { kind: "s-bend"; firstSign: 1 | -1 };
+
+/**
  * A user-designed direction pictogram, saved to the browser's local icon
- * library (not tied to a single roadbook - see src/lib/db.ts). Built with
- * the same parametric junction/roundabout model as the built-in icons
- * (see buildCustomGlyph in direction-icons.ts), so it stays visually
- * consistent with the rest of the set: `takenAngle` is the bold road
- * actually travelled (0 = straight ahead, positive = clockwise/right),
- * `otherAngles` are thin untaken-arm stubs at the same junction (ignored
- * when `roundabout` is set, which draws a roundabout circle instead).
+ * library (not tied to a single roadbook - see src/lib/db.ts) so it's
+ * available across every roadbook created in this browser. Bundled into a
+ * roadbook's JSON export/import when actually used by one of its
+ * instructions (see src/lib/projects.ts), so sharing a roadbook file
+ * carries its custom icons along.
  */
 export interface CustomDirectionIcon {
   id: Id;
   name: string;
-  takenAngle: number;
-  otherAngles: number[];
-  roundabout: boolean;
+  template: CustomIconTemplate;
   createdAt: string;
 }
 
