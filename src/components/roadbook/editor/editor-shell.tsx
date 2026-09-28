@@ -24,6 +24,15 @@ const PdfPreview = dynamic(() => import("./pdf-preview").then((m) => m.PdfPrevie
   ),
 });
 
+const MapView = dynamic(() => import("./map-view").then((m) => m.MapView), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-1 items-center justify-center text-slate-400">
+      <Loader2 className="h-6 w-6 animate-spin" />
+    </div>
+  ),
+});
+
 export function EditorShell() {
   useAutosave();
   useGlobalShortcuts();
@@ -32,7 +41,7 @@ export function EditorShell() {
   const selectedStageId = useRoadbookStore((s) => s.selectedStageId);
   const selectedSectorId = useRoadbookStore((s) => s.selectedSectorId);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [tab, setTab] = useState<"editor" | "preview">("editor");
+  const [tab, setTab] = useState<"editor" | "map" | "preview">("editor");
   const [exporting, setExporting] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -62,12 +71,13 @@ export function EditorShell() {
             <Tabs
               value={tab}
               onValueChange={(v) => {
-                setTab(v as "editor" | "preview");
+                setTab(v as "editor" | "map" | "preview");
                 setMobileSidebarOpen(false);
               }}
             >
               <TabsList>
                 <TabsTrigger value="editor">Editor</TabsTrigger>
+                <TabsTrigger value="map">Mapa</TabsTrigger>
                 <TabsTrigger value="preview">Previsualització</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -77,15 +87,19 @@ export function EditorShell() {
             </Button>
           </div>
 
-          {tab === "editor" ? (
-            stage && sector ? (
+          {tab === "editor" &&
+            (stage && sector ? (
               <SectorPanel stageId={stage.id} sector={sector} />
             ) : (
               <NewSectorEmptyState stageId={stage?.id} />
-            )
-          ) : (
-            <PdfPreview roadbook={roadbook} />
-          )}
+            ))}
+          {tab === "map" &&
+            (stage && sector ? (
+              <MapView key={sector.id} stageId={stage.id} sector={sector} />
+            ) : (
+              <NewSectorEmptyState stageId={stage?.id} />
+            ))}
+          {tab === "preview" && <PdfPreview roadbook={roadbook} />}
         </div>
       </div>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
