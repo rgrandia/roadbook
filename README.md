@@ -43,6 +43,25 @@ instrucció), amb el quilometratge total i parcial calculant-se sol.
 - **Camps addicionals per fila**: coordenades GPS, traducció/segon idioma i avís
   de perill ("!!"), accessibles des del menú de la fila sense ocupar espai a la
   taula principal — la introducció ràpida de dades no se'n ressent.
+- **Mapa interactiu** (pestanya "Mapa" de l'editor): les coordenades GPS de les
+  instruccions — abans text lliure sense cap ús — ara es dibuixen com a marcadors
+  numerats sobre un mapa OpenStreetMap, units per una línia discontínua en
+  l'ordre de les instruccions. Es pot triar una instrucció i clicar al mapa per
+  marcar-hi les seves coordenades (avança sola a la següent instrucció, per
+  marcar-ne diverses seguides). És una vista aproximada en línia recta entre
+  punts, no una ruta per carretera calculada.
+- **Importació de rutes GPX**: des del panell del sector, "Importa GPX" llegeix
+  un fitxer `.gpx` (waypoints amb nom, o punts de track amb un control per
+  mostrejar-los si el fitxer és una gravació densa) i crea una instrucció per
+  punt, amb la distància entre instruccions calculada automàticament per
+  coordenades (fórmula de l'haversine) — sense haver-les de cronometrar ni
+  mesurar a mà.
+- **App instal·lable i utilitzable sense cobertura**: manifest + service worker
+  (només en producció) fan que Rally Roadbook es pugui instal·lar com una app
+  (Chrome/Edge/Android mostren un botó "Instal·la l'app" quan el navegador ho
+  permet) i seguir funcionant sense connexió un cop s'ha carregat un cop —
+  l'ús real d'aquesta eina és sovint fent reconeixement en zones de muntanya
+  sense senyal.
 - **Destinacions en diverses línies**: el camp de destinació és multilínia (una
   senyal apilada per línia al PDF, com un rètol real de carretera).
 - **Seccions d'enllaç**: un sector de tipus "Enllaç" amb població inici/final
@@ -76,6 +95,8 @@ instrucció), amb el quilometratge total i parcial calculant-se sol.
 | Persistència | Dexie (IndexedDB), local-first |
 | Drag & drop | `@dnd-kit` |
 | PDF | `@react-pdf/renderer` (mateix document per a previsualització i export) |
+| Mapa | `leaflet` + `react-leaflet`, tiles públics d'OpenStreetMap (sense clau) |
+| Fora de línia | Service worker escrit a mà (sense Workbox/next-pwa — vegeu [Arquitectura](#arquitectura-i-decisions)) |
 | Tests | Vitest + Testing Library |
 
 No s'ha afegit cap dependència de gestió d'estat de servidor / backend perquè
@@ -141,7 +162,8 @@ src/
   components/
     ui/                    Primitives (Button, Input, Dialog, Popover...) sobre Radix
     roadbook/               Components de domini (pickers, targetes, onboarding)
-      editor/                Editor: top bar, sidebar, taula d'instruccions, PDF preview
+      editor/                Editor: top bar, sidebar, taula d'instruccions,
+                              mapa (map-view.tsx), importació GPX, PDF preview
   lib/
     roadbook/
       types.ts               Model de dades (Roadbook → Stage → Sector → Instruction)
@@ -149,7 +171,9 @@ src/
       factory.ts               Constructors per defecte
       library.ts                Categories, tipus de via, autocompletat
       direction-icons.ts         Dades SVG compartides (web + PDF)
-      validation.ts               Avisos no bloquejants
+      gps.ts                       Parseig de coordenades + distància haversine
+      gpx.ts                        Parseig de fitxers GPX
+      validation.ts                  Avisos no bloquejants
     pdf/
       roadbook-document.tsx        Document @react-pdf/renderer (font de veritat del PDF)
       direction-icon-pdf.tsx        Icones de direcció en PDF (mateixes dades que la UI)
@@ -159,6 +183,10 @@ src/
   store/
     roadbook-store.ts                  Zustand + Immer + zundo (estat + undo/redo)
     use-autosave.ts                     Autosave amb debounce cap a Dexie
+public/
+  manifest.json                          Manifest de la PWA
+  sw.js                                   Service worker (runtime caching, escrit a mà)
+  icons/                                   Icones de l'app (generades des del propi AppLogo)
 ```
 
 ### Model de dades
@@ -241,6 +269,20 @@ seria l'única capa a substituir per crides HTTP si més endavant s'afegeix un
 backend cloud — la resta de l'aplicació (store, UI) no sap ni li importa on
 viuen les dades.
 
+### Per què un service worker escrit a mà (`public/sw.js`), no next-pwa/Workbox
+
+El projecte compila amb Turbopack (`next dev` i `next build` ho mostren
+explícitament), i els plugins habituals per convertir una app Next en PWA
+(`next-pwa` i derivats) s'enganxen a la configuració de Webpack — la seva
+compatibilitat amb Turbopack no està provada, i que fallessin en silenci en
+producció és pitjor que escriure el service worker a mà. La solució adoptada
+fa "runtime caching" (stale-while-revalidate) en lloc d'un precache manifest:
+mai necessita saber per endavant els noms dels fitxers de build (que Next
+hasheja), així que és correcta independentment de l'eina de build. Ignora
+deliberadament les peticions a un altre origen (els tiles del mapa), i només
+es registra en producció (`process.env.NODE_ENV === "production"`) perquè
+registrar-lo en desenvolupament interferiria amb l'HMR de Turbopack.
+
 ### Limitacions conegudes / següents passos
 
 - El PDF és 100% blanc i negre (cap fila depèn del color per ser llegible:
@@ -251,9 +293,23 @@ viuen les dades.
 - El temps per instrucció es pot introduir manualment; el càlcul automàtic
   `distància / velocitat = temps` només està implementat a nivell de sector
   (l'arquitectura ja ho suporta a nivell d'instrucció si cal ampliar-ho).
-- La importació de CSV/Excel/GPX/KML no està implementada al MVP, però el
-  model de dades (`src/lib/roadbook/types.ts`) està pensat perquè afegir-ho
-  només calgui escriure un parser cap a `Instruction[]`.
+- La importació GPX (`src/lib/roadbook/gpx.ts`) cobreix waypoints i punts de
+  track; CSV/Excel/KML encara no estan implementats, però el model de dades
+  (`src/lib/roadbook/types.ts`) i el mateix patró de `parseGpxFile` fan que
+  afegir-ne un altre sigui bàsicament escriure un parser cap a
+  `Partial<Instruction>[]`.
+- El mapa (pestanya "Mapa") mostra una línia recta entre punts, no una ruta
+  real per carretera — calcular-la necessitaria una API de routing (clau i
+  cost recurrents), fora de l'abast "tot al navegador, cost zero" d'aquesta
+  ronda. Els tiles venen del servidor públic d'OpenStreetMap (sense clau),
+  pensat per a ús lleuger/personal — no per a trànsit de producció a gran
+  escala; si l'ús creixés, caldria passar a un proveïdor de pagament
+  (MapTiler, Stadia...) o servir tiles propis.
+- El mode fora de línia cobreix l'aplicació en si (JS/CSS/tipografia, via el
+  service worker) un cop s'ha carregat un cop, però no els tiles del mapa
+  (són d'un origen extern i el service worker els ignora deliberadament):
+  sense connexió, el mapa es veurà en blanc encara que la resta de l'app
+  funcioni.
 - L'editor d'icones personalitzades cobreix totes les famílies paramètriques
   (gir/cruïlla, rotonda, desviament, autopista, revolt en S) però no els
   ganxos fets a mà d'un sol ús (tancada, incorporació, mitja volta) ni dibuix
@@ -295,3 +351,14 @@ npm run test
   Testing Library) per `ProjectCard`, `Onboarding`, `DirectionPicker`
   (incloent el cercador nou) i `IconDesignerDialog` (incloent el teclat del
   compàs i el botó de mirall) (14 tests).
+- `src/lib/roadbook/gps.test.ts` — `parseCoordinate` amb decimal, decimal amb
+  coma, lletra d'hemisferi, graus+minuts decimals (el format ja usat als
+  fixtures) i DMS complet, més `haversineDistanceKm` contra una distància
+  coneguda (10 tests).
+- `src/lib/roadbook/gpx.test.ts` — `parseGpxFile` amb waypoints amb nom i
+  punts de track, namespace GPX per defecte, XML malformat i fitxers sense
+  punts; `samplePoints` (mostreig d'1 de cada N) (8 tests).
+- `src/store/roadbook-store.test.ts` — el nou `importInstructions` insereix
+  totes les instruccions en ordre i recalcula el quilometratge a través de la
+  cadena existent (el store no tenia cap test directe fins ara; aquest cobreix
+  només l'acció nova, no és un backfill de tot l'store) (4 tests).
