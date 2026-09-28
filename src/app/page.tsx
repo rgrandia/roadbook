@@ -6,6 +6,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Loader2, Shapes, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { AppLogo } from "@/components/app-logo";
+import { PwaInstallButton } from "@/components/pwa-register";
 import { Button } from "@/components/ui/button";
 import { IconDesignerDialog } from "@/components/roadbook/icon-designer-dialog";
 import { NewRoadbookDialog } from "@/components/roadbook/new-roadbook-dialog";
@@ -85,6 +86,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold tracking-tight text-white">Rally Roadbook</p>
           </div>
           <div className="flex items-center gap-2">
+            <PwaInstallButton className="text-slate-300 hover:bg-white/10 hover:text-white" />
             <Button
               variant="ghost"
               className="text-slate-300 hover:bg-white/10 hover:text-white"

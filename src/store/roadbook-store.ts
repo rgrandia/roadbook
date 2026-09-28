@@ -58,6 +58,8 @@ interface RoadbookState {
     afterInstructionId?: string | null,
     partial?: Partial<Instruction>,
   ) => string | undefined;
+  /** Appends many instructions in one go (e.g. a GPX import) - one recalculation and one undo step, not N. */
+  importInstructions: (stageId: string, sectorId: string, partials: Partial<Instruction>[]) => void;
   updateInstruction: (stageId: string, sectorId: string, instructionId: string, partial: Partial<Instruction>) => void;
   deleteInstruction: (stageId: string, sectorId: string, instructionId: string) => void;
   duplicateInstruction: (stageId: string, sectorId: string, instructionId: string) => string | undefined;
@@ -292,6 +294,17 @@ export const useRoadbookStore = create<RoadbookState>()(
         });
         return newId;
       },
+
+      importInstructions: (stageId, sectorId, partials) =>
+        set((state) => {
+          if (!state.roadbook) return;
+          const sector = findSector(state.roadbook, stageId, sectorId);
+          if (!sector) return;
+          const list = sector.instructions as Instruction[];
+          for (const partial of partials) list.push(createInstruction(partial));
+          applyInstructions(sector, list);
+          state.roadbook.updatedAt = new Date().toISOString();
+        }),
 
       updateInstruction: (stageId, sectorId, instructionId, partial) =>
         set((state) => {

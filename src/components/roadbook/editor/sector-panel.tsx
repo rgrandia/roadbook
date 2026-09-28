@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { formatKm, formatMinutes, sectorEstimatedTimeMinutes, sectorTotalDistanc
 import type { Sector, SectorType } from "@/lib/roadbook/types";
 import { validateSector } from "@/lib/roadbook/validation";
 import { useRoadbookStore } from "@/store/roadbook-store";
+import { ImportGpxDialog } from "./import-gpx-dialog";
 import { InstructionTable } from "./instruction-table";
 import { QuickAddToolbar } from "./quick-add-toolbar";
 
@@ -29,6 +31,7 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
   const updateSectorMeta = useRoadbookStore((s) => s.updateSectorMeta);
   const addInstruction = useRoadbookStore((s) => s.addInstruction);
   const recalcAllKm = useRoadbookStore((s) => s.recalcAllKm);
+  const [gpxOpen, setGpxOpen] = useState(false);
 
   if (!stage) return null;
 
@@ -129,6 +132,9 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
             <Button variant="outline" size="sm" onClick={recalcAllKm} title="Recalcula tot el quilometratge">
               <RefreshCw className="h-3.5 w-3.5" /> Recalcula
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setGpxOpen(true)} title="Importa instruccions des d'una ruta GPX">
+              <Upload className="h-3.5 w-3.5" /> Importa GPX
+            </Button>
           </div>
         </div>
 
@@ -162,6 +168,8 @@ export function SectorPanel({ stageId, sector }: { stageId: string; sector: Sect
           <InstructionTable stageId={stageId} sector={sector} />
         </div>
       </div>
+
+      <ImportGpxDialog open={gpxOpen} onOpenChange={setGpxOpen} stageId={stageId} sectorId={sector.id} />
     </div>
   );
 }
